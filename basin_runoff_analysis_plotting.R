@@ -10,7 +10,7 @@ library(stats)
 library(magrittr)
 library(dplyr)
 
-source('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/xanthos_postprocessing_fns.R')
+source('C:/Users/twild/all_git_repositories/idb_results/downscaling/climate_impacts_plots/xanthos_postprocessing_fns.R')
 setwd('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos')
 gcm_colors <- c("noresm1-m" = "#736F6E",
                 "miroc-esm-chem" = "#C0C0C0",
