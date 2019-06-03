@@ -212,7 +212,7 @@ xanthos_proc <- function(xanthos_var_names, xanthos_config_names, gcm_names, rcp
           }else{
             xanthos_dir <- paste0(results_basepath)
           }
-          xanthos_file <- paste0(var, "_", run_name, '.csv')
+          xanthos_file <- paste0(var, "_", gcm, "_", rcp, "_", time_scale, '.csv')
           xanthos_output_filepath <- paste0(xanthos_dir, '/', xanthos_file)
           if(dir.exists(xanthos_dir)){
             if(var == 'Basin_runoff_km3peryear'){
@@ -256,7 +256,7 @@ xanthos_hist_proc <- function(xanthos_var_names, xanthos_config_names, df_all_ru
           }else{
             xanthos_dir <- paste0(results_basepath)
           }
-          xanthos_file <- paste0(var, "_", run_name, '.csv')
+          xanthos_file <- paste0(var, "_", 'watch+wfdei', "_", '1970_2010', '.csv')
           xanthos_output_filepath <- paste0(xanthos_dir, '/', xanthos_file)
           if(dir.exists(xanthos_dir)){
             if(var=='Basin_runoff_km3peryear'){
@@ -279,7 +279,7 @@ xanthos_hist_proc <- function(xanthos_var_names, xanthos_config_names, df_all_ru
                 filter(name %in% filter_list[[var]]) %>% mutate(value=value*277.78)
 
             }
-            input['mod'] <- 'pm_abcd_mrtm'
+            input['mod'] <- xanthos_config_names
             input['var'] <- var
             input['gcm'] <- 'watch+wfdei'
             input['rcp'] <- 'historical'
@@ -407,7 +407,6 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
         plot_df <- df_all_runs %>%
           filter(name==reg, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
         plot_df_hist_2 <- plot_df_hist %>% filter(name == reg, year<=2010)
-        print(plot_df_hist_2)
         line_plot_hist_proj(plot_df, plot_df_hist_2, fig_name, gcm_names, rcp_names, rolling=roll, y_lbl=y_ax_lbl,
                             y_max=ymax_across_gcms, trendline=trendline, all_same_color=all_same_color, title=reg, 
                             legend_on=legend_on)
@@ -464,7 +463,8 @@ hydro_perc_change <- function(df_hydro, region_list, gcm_names, rcp_names, start
 }
 
 
-adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
+adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, basins_filter, time_scale, stored_in_dir, run_name, 
+                            xanthos_var_names){
   
   ## Purpose of file is threefold:
   
@@ -490,12 +490,12 @@ adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
   # Date: April 2019  
   
   # Required input files
-  gcam_basins <- paste0(base_dir, '/', "gcam_basin_id.csv")
-  renewrsc_max_gcam <- paste0(base_dir, '/', "L201.RenewRsrcCurves_runoff.csv")
-  renewrsc_max_gcam <- paste0(base_dir, '/', "L201.RenewRsrcCurves_calib_watergap.csv")
-  L201.GrdRenewRsrcMax_runoff <- paste0(base_dir, '/', "L201.GrdRenewRsrcMax_runoff.csv")
+  gcam_basins <- paste0(extras_dir, '/', "gcam_basin_id.csv")
+  renewrsc_max_gcam <- paste0(extras_dir, '/', "L201.RenewRsrcCurves_runoff.csv")
+  renewrsc_max_gcam <- paste0(extras_dir, '/', "L201.RenewRsrcCurves_calib_watergap.csv")
+  L201.GrdRenewRsrcMax_runoff <- paste0(extras_dir, '/', "L201.GrdRenewRsrcMax_runoff.csv")
   
-  reanalysis_data <- paste0(base_dir, '/', "runoff_max_wfdei_1970_2010.csv")
+  reanalysis_data <- paste0(extras_dir, '/', "runoff_max_wfdei_1970_2010.csv")
   # get basin data for joining
   read_csv(gcam_basins) %>%
     select(basin.id, basin.name) %>% rename(GCAM_basin_name=basin.name, GCAM_basin_ID=basin.id) ->
@@ -534,11 +534,18 @@ adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
     mutate(gcm = "wfdei") ->
     runoff_mean_wfdei_hist
   
-  # gcm = "gfdl-esm2m"; rcp = "2p6"
+  # gcm = "GFDL-ESM2M"; rcp = "2p6"
   # read in historical GCM values
-  get_gcm <- function(gcm, rcp){
-    xan_dir <- "output/pic_impacts_runs/"
-    read_csv(paste0(xan_dir, "Basin_runoff_km3peryear_pm_abcd_mrtm_", gcm, "_rcp", rcp, "_1950_2099.csv")) %>% 
+  get_gcm <- function(gcm, rcp, base_dir, stored_in_dir, run_name, time_scale){
+    run_name_2 <- paste0(run_name, "_", gcm, "_", 'rcp', rcp, "_", time_scale)
+    if (stored_in_dir==1){
+      xanthos_dir <- paste0(base_dir, '/', run_name_2)
+    }else{
+      xanthos_dir <- paste0(base_dir)
+    }
+    xanthos_file <- paste0(xanthos_var_names, "_", gcm, "_", 'rcp', rcp, '_', time_scale, '.csv')
+    xanthos_output_filepath <- paste0(xanthos_dir, '/', xanthos_file)
+    read_csv(xanthos_output_filepath) %>% 
       gather(year, runoff, -name, -id) %>% 
       select(-name) %>% 
       mutate(gcm = gcm, rcp = rcp, year = as.integer(year)) %>% 
@@ -546,16 +553,16 @@ adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
   }
   
   bind_rows(
-    get_gcm("gfdl-esm2m", "2p6"), get_gcm("gfdl-esm2m", "4p5"),
-    get_gcm("gfdl-esm2m", "6p0"), get_gcm("gfdl-esm2m", "8p5"),
-    get_gcm("hadgem2-es", "2p6"), get_gcm("hadgem2-es", "4p5"),
-    get_gcm("hadgem2-es", "6p0"), get_gcm("hadgem2-es", "8p5"),
-    get_gcm("ipsl-cm5a-lr", "2p6"), get_gcm("ipsl-cm5a-lr", "4p5"),
-    get_gcm("ipsl-cm5a-lr", "6p0"), get_gcm("ipsl-cm5a-lr", "8p5"),
-    get_gcm("miroc-esm-chem", "2p6"), get_gcm("miroc-esm-chem", "4p5"),
-    get_gcm("miroc-esm-chem", "6p0"), get_gcm("miroc-esm-chem", "8p5"),
-    get_gcm("noresm1-m", "2p6"), get_gcm("noresm1-m", "4p5"),
-    get_gcm("noresm1-m", "6p0"), get_gcm("noresm1-m", "8p5")
+    get_gcm("GFDL-ESM2M", "2p6", base_dir, stored_in_dir, run_name, time_scale), get_gcm("GFDL-ESM2M", "4p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("GFDL-ESM2M", "6p0", base_dir, stored_in_dir, run_name, time_scale), get_gcm("GFDL-ESM2M", "8p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("HadGEM2-ES", "2p6", base_dir, stored_in_dir, run_name, time_scale), get_gcm("HadGEM2-ES", "4p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("HadGEM2-ES", "6p0", base_dir, stored_in_dir, run_name, time_scale), get_gcm("HadGEM2-ES", "8p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("IPSL-CM5A-LR", "2p6", base_dir, stored_in_dir, run_name, time_scale), get_gcm("IPSL-CM5A-LR", "4p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("IPSL-CM5A-LR", "6p0", base_dir, stored_in_dir, run_name, time_scale), get_gcm("IPSL-CM5A-LR", "8p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("MIROC-ESM-CHEM", "2p6", base_dir, stored_in_dir, run_name, time_scale), get_gcm("MIROC-ESM-CHEM", "4p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("MIROC-ESM-CHEM", "6p0", base_dir, stored_in_dir, run_name, time_scale), get_gcm("MIROC-ESM-CHEM", "8p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("NorESM1-M", "2p6", base_dir, stored_in_dir, run_name, time_scale), get_gcm("NorESM1-M", "4p5", base_dir, stored_in_dir, run_name, time_scale),
+    get_gcm("NorESM1-M", "6p0", base_dir, stored_in_dir, run_name, time_scale), get_gcm("NorESM1-M", "8p5", base_dir, stored_in_dir, run_name, time_scale)
   ) -> 
     runoff_gcm_all
   
@@ -567,7 +574,7 @@ adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
     ) %>% group_by(id, gcm) %>% summarise(runoff = mean(runoff)) %>% 
     ungroup() %>%
     spread(gcm, runoff) %>% 
-    ggplot(aes(`ipsl-cm5a-lr`, wfdei)) +
+    ggplot(aes(`IPSL-CM5A-LR`, wfdei)) +
     geom_point() + geom_abline() +
     scale_y_log10() + scale_x_log10()
   labs(y = "Global runoff (km3)",
@@ -600,7 +607,7 @@ adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
   ) %>% 
     spread(gcm, runoff) %>% 
     ggplot(aes(y = wfdei)) +
-    geom_point(aes(x = `ipsl-cm5a-lr`)) + geom_abline() + 
+    geom_point(aes(x = `IPSL-CM5A-LR`)) + geom_abline() + 
     # ^^ switch gcm name in above line to view different model
     scale_x_continuous(trans='log10') +
     scale_y_continuous(trans='log10')
@@ -698,7 +705,7 @@ adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
   
   # prepare L2 gcam files for ISI-MIP scenarios
   # Insert these into GCAM and rebuild the data system
-  gcm <- "gfdl-esm2m"
+  gcm <- "GFDL-ESM2M"
   rcp <- "2p6"
 
   
@@ -724,26 +731,26 @@ adjust_gcm_mean <- function(base_dir, level2_out_dir, basins_filter){
     
   }  
     
-  write_gcm_csv("gfdl-esm2m", "2p6")
-  write_gcm_csv("gfdl-esm2m", "4p5")
-  write_gcm_csv("gfdl-esm2m", "6p0")
-  write_gcm_csv("gfdl-esm2m", "8p5")
-  write_gcm_csv("hadgem2-es", "2p6")
-  write_gcm_csv("hadgem2-es", "4p5")
-  write_gcm_csv("hadgem2-es", "6p0")
-  write_gcm_csv("hadgem2-es", "8p5")
-  write_gcm_csv("ipsl-cm5a-lr", "2p6")
-  write_gcm_csv("ipsl-cm5a-lr", "4p5")
-  write_gcm_csv("ipsl-cm5a-lr", "6p0")
-  write_gcm_csv("ipsl-cm5a-lr", "8p5")
-  write_gcm_csv("miroc-esm-chem", "2p6")
-  write_gcm_csv("miroc-esm-chem", "4p5")
-  write_gcm_csv("miroc-esm-chem", "6p0")
-  write_gcm_csv("miroc-esm-chem", "8p5")
-  write_gcm_csv("noresm1-m", "2p6")
-  write_gcm_csv("noresm1-m", "4p5")
-  write_gcm_csv("noresm1-m", "6p0")
-  write_gcm_csv("noresm1-m", "8p5")
+  write_gcm_csv("GFDL-ESM2M", "2p6")
+  write_gcm_csv("GFDL-ESM2M", "4p5")
+  write_gcm_csv("GFDL-ESM2M", "6p0")
+  write_gcm_csv("GFDL-ESM2M", "8p5")
+  write_gcm_csv("HadGEM2-ES", "2p6")
+  write_gcm_csv("HadGEM2-ES", "4p5")
+  write_gcm_csv("HadGEM2-ES", "6p0")
+  write_gcm_csv("HadGEM2-ES", "8p5")
+  write_gcm_csv("IPSL-CM5A-LR", "2p6")
+  write_gcm_csv("IPSL-CM5A-LR", "4p5")
+  write_gcm_csv("IPSL-CM5A-LR", "6p0")
+  write_gcm_csv("IPSL-CM5A-LR", "8p5")
+  write_gcm_csv("MIROC-ESM-CHEM", "2p6")
+  write_gcm_csv("MIROC-ESM-CHEM", "4p5")
+  write_gcm_csv("MIROC-ESM-CHEM", "6p0")
+  write_gcm_csv("MIROC-ESM-CHEM", "8p5")
+  write_gcm_csv("NorESM1-M", "2p6")
+  write_gcm_csv("NorESM1-M", "4p5")
+  write_gcm_csv("NorESM1-M", "6p0")
+  write_gcm_csv("NorESM1-M", "8p5")
   # Modify deltas_gcm_all to include basins so it can be  used in separate plotting module that organizes by basin.
   read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(deltas_gcm_all, by='id') %>% 
     select(-id) %>% filter(name %in% basins_filter) ->deltas_gcm_all
@@ -795,7 +802,7 @@ adjust_gcm_hydro_mean <- function(base_dir, level2_out_dir, country_filter){
     mutate(gcm = "wfdei") ->
     hydro_mean_wfdei_hist
   
-  # gcm = "gfdl-esm2m"; rcp = "2p6"
+  # gcm = "GFDL-ESM2M"; rcp = "2p6"
   # read in historical GCM values
   get_gcm <- function(gcm, rcp){
     read_csv(paste0(base_dir, "/actual_hydro_by_gcam_region_ej_pm_abcd_mrtm_", gcm, "_rcp", rcp, "_1950_2099.csv")) %>%
@@ -806,16 +813,16 @@ adjust_gcm_hydro_mean <- function(base_dir, level2_out_dir, country_filter){
   }
   
   bind_rows(
-    get_gcm("gfdl-esm2m", "2p6"), get_gcm("gfdl-esm2m", "4p5"),
-    get_gcm("gfdl-esm2m", "6p0"), get_gcm("gfdl-esm2m", "8p5"),
-    get_gcm("hadgem2-es", "2p6"), get_gcm("hadgem2-es", "4p5"),
-    get_gcm("hadgem2-es", "6p0"), get_gcm("hadgem2-es", "8p5"),
-    get_gcm("ipsl-cm5a-lr", "2p6"), get_gcm("ipsl-cm5a-lr", "4p5"),
-    get_gcm("ipsl-cm5a-lr", "6p0"), get_gcm("ipsl-cm5a-lr", "8p5"),
-    get_gcm("miroc-esm-chem", "2p6"), get_gcm("miroc-esm-chem", "4p5"),
-    get_gcm("miroc-esm-chem", "6p0"), get_gcm("miroc-esm-chem", "8p5"),
-    get_gcm("noresm1-m", "2p6"), get_gcm("noresm1-m", "4p5"),
-    get_gcm("noresm1-m", "6p0"), get_gcm("noresm1-m", "8p5")
+    get_gcm("GFDL-ESM2M", "2p6"), get_gcm("GFDL-ESM2M", "4p5"),
+    get_gcm("GFDL-ESM2M", "6p0"), get_gcm("GFDL-ESM2M", "8p5"),
+    get_gcm("HadGEM2-ES", "2p6"), get_gcm("HadGEM2-ES", "4p5"),
+    get_gcm("HadGEM2-ES", "6p0"), get_gcm("HadGEM2-ES", "8p5"),
+    get_gcm("IPSL-CM5A-LR", "2p6"), get_gcm("IPSL-CM5A-LR", "4p5"),
+    get_gcm("IPSL-CM5A-LR", "6p0"), get_gcm("IPSL-CM5A-LR", "8p5"),
+    get_gcm("MIROC-ESM-CHEM", "2p6"), get_gcm("MIROC-ESM-CHEM", "4p5"),
+    get_gcm("MIROC-ESM-CHEM", "6p0"), get_gcm("MIROC-ESM-CHEM", "8p5"),
+    get_gcm("NorESM1-M", "2p6"), get_gcm("NorESM1-M", "4p5"),
+    get_gcm("NorESM1-M", "6p0"), get_gcm("NorESM1-M", "8p5")
   ) -> 
     hydro_gcm_all
   
@@ -887,7 +894,7 @@ adjust_gcm_hydro_mean <- function(base_dir, level2_out_dir, country_filter){
   
   # prepare L2 gcam files for ISI-MIP scenarios
   # Insert these into GCAM and rebuild the data system
-  gcm <- "gfdl-esm2m"
+  gcm <- "GFDL-ESM2M"
   rcp <- "2p6"
 
   
@@ -913,26 +920,26 @@ adjust_gcm_hydro_mean <- function(base_dir, level2_out_dir, country_filter){
     
   }  
     
-  write_gcm_csv("gfdl-esm2m", "2p6")
-  write_gcm_csv("gfdl-esm2m", "4p5")
-  write_gcm_csv("gfdl-esm2m", "6p0")
-  write_gcm_csv("gfdl-esm2m", "8p5")
-  write_gcm_csv("hadgem2-es", "2p6")
-  write_gcm_csv("hadgem2-es", "4p5")
-  write_gcm_csv("hadgem2-es", "6p0")
-  write_gcm_csv("hadgem2-es", "8p5")
-  write_gcm_csv("ipsl-cm5a-lr", "2p6")
-  write_gcm_csv("ipsl-cm5a-lr", "4p5")
-  write_gcm_csv("ipsl-cm5a-lr", "6p0")
-  write_gcm_csv("ipsl-cm5a-lr", "8p5")
-  write_gcm_csv("miroc-esm-chem", "2p6")
-  write_gcm_csv("miroc-esm-chem", "4p5")
-  write_gcm_csv("miroc-esm-chem", "6p0")
-  write_gcm_csv("miroc-esm-chem", "8p5")
-  write_gcm_csv("noresm1-m", "2p6")
-  write_gcm_csv("noresm1-m", "4p5")
-  write_gcm_csv("noresm1-m", "6p0")
-  write_gcm_csv("noresm1-m", "8p5")
+  write_gcm_csv("GFDL-ESM2M", "2p6")
+  write_gcm_csv("GFDL-ESM2M", "4p5")
+  write_gcm_csv("GFDL-ESM2M", "6p0")
+  write_gcm_csv("GFDL-ESM2M", "8p5")
+  write_gcm_csv("HadGEM2-ES", "2p6")
+  write_gcm_csv("HadGEM2-ES", "4p5")
+  write_gcm_csv("HadGEM2-ES", "6p0")
+  write_gcm_csv("HadGEM2-ES", "8p5")
+  write_gcm_csv("IPSL-CM5A-LR", "2p6")
+  write_gcm_csv("IPSL-CM5A-LR", "4p5")
+  write_gcm_csv("IPSL-CM5A-LR", "6p0")
+  write_gcm_csv("IPSL-CM5A-LR", "8p5")
+  write_gcm_csv("MIROC-ESM-CHEM", "2p6")
+  write_gcm_csv("MIROC-ESM-CHEM", "4p5")
+  write_gcm_csv("MIROC-ESM-CHEM", "6p0")
+  write_gcm_csv("MIROC-ESM-CHEM", "8p5")
+  write_gcm_csv("NorESM1-M", "2p6")
+  write_gcm_csv("NorESM1-M", "4p5")
+  write_gcm_csv("NorESM1-M", "6p0")
+  write_gcm_csv("NorESM1-M", "8p5")
   # Modify deltas_gcm_all to include basins so it can be  used in separate plotting module that organizes by basin.
   read_csv(gcam_countries) %>% rename(id=ctry_code) %>% rename(name=region) %>% left_join(deltas_gcm_all, by='id') %>% 
     select(-id) %>% filter(name %in% country_filter) ->deltas_gcm_all
@@ -982,7 +989,7 @@ adjust_gcm_mean_country <- function(base_dir, level2_out_dir, country_filter){
     mutate(gcm = "wfdei") ->
     runoff_mean_wfdei_hist
   
-  # gcm = "gfdl-esm2m"; rcp = "2p6"
+  # gcm = "GFDL-ESM2M"; rcp = "2p6"
   # read in historical GCM values
   get_gcm <- function(gcm, rcp){
     xan_dir <- "output/pic_impacts_runs/"
@@ -994,16 +1001,16 @@ adjust_gcm_mean_country <- function(base_dir, level2_out_dir, country_filter){
   }
   
   bind_rows(
-    get_gcm("gfdl-esm2m", "2p6"), get_gcm("gfdl-esm2m", "4p5"),
-    get_gcm("gfdl-esm2m", "6p0"), get_gcm("gfdl-esm2m", "8p5"),
-    get_gcm("hadgem2-es", "2p6"), get_gcm("hadgem2-es", "4p5"),
-    get_gcm("hadgem2-es", "6p0"), get_gcm("hadgem2-es", "8p5"),
-    get_gcm("ipsl-cm5a-lr", "2p6"), get_gcm("ipsl-cm5a-lr", "4p5"),
-    get_gcm("ipsl-cm5a-lr", "6p0"), get_gcm("ipsl-cm5a-lr", "8p5"),
-    get_gcm("miroc-esm-chem", "2p6"), get_gcm("miroc-esm-chem", "4p5"),
-    get_gcm("miroc-esm-chem", "6p0"), get_gcm("miroc-esm-chem", "8p5"),
-    get_gcm("noresm1-m", "2p6"), get_gcm("noresm1-m", "4p5"),
-    get_gcm("noresm1-m", "6p0"), get_gcm("noresm1-m", "8p5")
+    get_gcm("GFDL-ESM2M", "2p6"), get_gcm("GFDL-ESM2M", "4p5"),
+    get_gcm("GFDL-ESM2M", "6p0"), get_gcm("GFDL-ESM2M", "8p5"),
+    get_gcm("HadGEM2-ES", "2p6"), get_gcm("HadGEM2-ES", "4p5"),
+    get_gcm("HadGEM2-ES", "6p0"), get_gcm("HadGEM2-ES", "8p5"),
+    get_gcm("IPSL-CM5A-LR", "2p6"), get_gcm("IPSL-CM5A-LR", "4p5"),
+    get_gcm("IPSL-CM5A-LR", "6p0"), get_gcm("IPSL-CM5A-LR", "8p5"),
+    get_gcm("MIROC-ESM-CHEM", "2p6"), get_gcm("MIROC-ESM-CHEM", "4p5"),
+    get_gcm("MIROC-ESM-CHEM", "6p0"), get_gcm("MIROC-ESM-CHEM", "8p5"),
+    get_gcm("NorESM1-M", "2p6"), get_gcm("NorESM1-M", "4p5"),
+    get_gcm("NorESM1-M", "6p0"), get_gcm("NorESM1-M", "8p5")
   ) -> 
     runoff_gcm_all
   
@@ -1088,26 +1095,26 @@ adjust_gcm_mean_country <- function(base_dir, level2_out_dir, country_filter){
     mutate(year = if_else(year == 2099, 2100, as.double(year))) ->
     runoff_gcm_all_GCAM
 
-  write_gcm_csv("gfdl-esm2m", "2p6")
-  write_gcm_csv("gfdl-esm2m", "4p5")
-  write_gcm_csv("gfdl-esm2m", "6p0")
-  write_gcm_csv("gfdl-esm2m", "8p5")
-  write_gcm_csv("hadgem2-es", "2p6")
-  write_gcm_csv("hadgem2-es", "4p5")
-  write_gcm_csv("hadgem2-es", "6p0")
-  write_gcm_csv("hadgem2-es", "8p5")
-  write_gcm_csv("ipsl-cm5a-lr", "2p6")
-  write_gcm_csv("ipsl-cm5a-lr", "4p5")
-  write_gcm_csv("ipsl-cm5a-lr", "6p0")
-  write_gcm_csv("ipsl-cm5a-lr", "8p5")
-  write_gcm_csv("miroc-esm-chem", "2p6")
-  write_gcm_csv("miroc-esm-chem", "4p5")
-  write_gcm_csv("miroc-esm-chem", "6p0")
-  write_gcm_csv("miroc-esm-chem", "8p5")
-  write_gcm_csv("noresm1-m", "2p6")
-  write_gcm_csv("noresm1-m", "4p5")
-  write_gcm_csv("noresm1-m", "6p0")
-  write_gcm_csv("noresm1-m", "8p5")
+  write_gcm_csv("GFDL-ESM2M", "2p6")
+  write_gcm_csv("GFDL-ESM2M", "4p5")
+  write_gcm_csv("GFDL-ESM2M", "6p0")
+  write_gcm_csv("GFDL-ESM2M", "8p5")
+  write_gcm_csv("HadGEM2-ES", "2p6")
+  write_gcm_csv("HadGEM2-ES", "4p5")
+  write_gcm_csv("HadGEM2-ES", "6p0")
+  write_gcm_csv("HadGEM2-ES", "8p5")
+  write_gcm_csv("IPSL-CM5A-LR", "2p6")
+  write_gcm_csv("IPSL-CM5A-LR", "4p5")
+  write_gcm_csv("IPSL-CM5A-LR", "6p0")
+  write_gcm_csv("IPSL-CM5A-LR", "8p5")
+  write_gcm_csv("MIROC-ESM-CHEM", "2p6")
+  write_gcm_csv("MIROC-ESM-CHEM", "4p5")
+  write_gcm_csv("MIROC-ESM-CHEM", "6p0")
+  write_gcm_csv("MIROC-ESM-CHEM", "8p5")
+  write_gcm_csv("NorESM1-M", "2p6")
+  write_gcm_csv("NorESM1-M", "4p5")
+  write_gcm_csv("NorESM1-M", "6p0")
+  write_gcm_csv("NorESM1-M", "8p5")
   # Modify deltas_gcm_all to include basins so it can be  used in separate plotting module that organizes by basin.
   read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(deltas_gcm_all, by='id') %>% 
     select(-id) %>% filter(name %in% basins_filter) ->deltas_gcm_all

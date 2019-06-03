@@ -10,13 +10,13 @@ library(stats)
 library(magrittr)
 library(dplyr)
 
-source('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/xanthos_postprocessing_fns.R')
+source('C:/Users/twild/all_git_repositories/idb_results/downscaling/climate_impacts_plots/xanthos_postprocessing_fns.R')
 
-gcm_colors <- c("noresm1-m" = "#736F6E",
-                "miroc-esm-chem" = "#C0C0C0",
-                "ipsl-cm5a-lr" = "#98AFC7",
-                "hadgem2-es" = "#6698FF",
-                "gfdl-esm2m" = "#153E7E",
+gcm_colors <- c("NorESM1-M" = "#736F6E",
+                "MIROC-ESM-CHEM" = "#C0C0C0",
+                "IPSL-CM5A-LR" = "#98AFC7",
+                "HadGEM2-ES" = "#6698FF",
+                "GFDL-ESM2M" = "#153E7E",
                 "watch+wfdei" = 'black')
 rcp_colors <- c("rcp8p5" = "#736F6E",
                 "rcp6p0" = "#C0C0C0",
@@ -25,17 +25,18 @@ rcp_colors <- c("rcp8p5" = "#736F6E",
                 "historical" = 'black')
 
 figures_basepath <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/figures/country'
-results_basepath <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/pic_impacts_runs'
-xanthos_config_names <- c('pm_abcd_mrtm')
-gcm_names <- c('noresm1-m', 'miroc-esm-chem', 'ipsl-cm5a-lr', 'hadgem2-es', 'gfdl-esm2m')
+results_basepath <- 'C:/Users/twild/all_git_repositories/Xanthos_final_4/example/output'
+xanthos_config_names <- c('clim_impacts')
+gcm_names <- c('NorESM1-M', 'MIROC-ESM-CHEM', 'IPSL-CM5A-LR', 'HadGEM2-ES', 'GFDL-ESM2M')
 gcm_names_incl_hist <- append(gcm_names, 'watch+wfdei')
 rcp_names <- c('rcp2p6', 'rcp4p5', 'rcp6p0', 'rcp8p5')
 rcp_names_incl_hist <- append(rcp_names, "historical")
 gridded_runoff <- c('q_km3peryear')
 time_scale <- '1950_2099'
 country_list <- c('Colombia', 'Uruguay', 'Argentina')
-stored_in_dir <- 0  # = 1 if dragged whole xanthos folder off pic; 0 if just dragged file down into results dir on comp
+stored_in_dir <- 1  # = 1 if dragged whole xanthos folder off pic; 0 if just dragged file down into results dir on comp
 add_historical <- 1  # Add historical values to dataframe
+run_name <- c('clim_impacts')
 
 # for gridded runoff by country
 country_grid_id_filepath <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/region33_grids_Uruguay.csv'

@@ -12,40 +12,45 @@ library(dplyr)
 
 source('C:/Users/twild/all_git_repositories/idb_results/downscaling/climate_impacts_plots/xanthos_postprocessing_fns.R')
 setwd('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos')
-gcm_colors <- c("noresm1-m" = "#736F6E",
-                "miroc-esm-chem" = "#C0C0C0",
-                "ipsl-cm5a-lr" = "#98AFC7",
-                "hadgem2-es" = "#6698FF",
-                "gfdl-esm2m" = "#153E7E",
-                "watch+wfdei" = 'black',
-                'historical' = 'black',
-                'historical mean' = 'black')
 rcp_colors <- c("rcp8p5" = "#736F6E",
                 "rcp6p0" = "#C0C0C0",
                 "rcp4p5" = "#98AFC7",
                 "rcp2p6" = "#6698FF",
                 "historical" = 'black',
                 'historical mean' = 'black')
+gcm_colors <- c("NorESM1-M" = "#736F6E",
+                "MIROC-ESM-CHEM" = "#C0C0C0",
+                "IPSL-CM5A-LR" = "#98AFC7",
+                "HadGEM2-ES" = "#6698FF",
+                "GFDL-ESM2M" = "#153E7E",
+                "watch+wfdei" = 'black',
+                'historical' = 'black',
+                'historical mean' = 'black')
 
 figures_basepath <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/figures/basin'
-results_basepath <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/pic_impacts_runs'
-xanthos_config_names <- c('pm_abcd_mrtm')
-gcm_names <- c('noresm1-m', 'miroc-esm-chem', 'ipsl-cm5a-lr', 'hadgem2-es', 'gfdl-esm2m')
+results_basepath <- 'C:/Users/twild/all_git_repositories/Xanthos_final_4/example/output'
+xanthos_config_names <- c('clim_impacts')
+gcm_names <- c('NorESM1-M', 'MIROC-ESM-CHEM', 'IPSL-CM5A-LR', 'HadGEM2-ES', 'GFDL-ESM2M')
 gcm_names_incl_hist <- append(gcm_names, 'watch+wfdei')
 rcp_names <- c('rcp2p6', 'rcp4p5', 'rcp6p0', 'rcp8p5')
 rcp_names_incl_hist <- append(rcp_names, "historical")
 xanthos_var_names <- c('Basin_runoff_km3peryear')
 time_scale <- '1950_2099'
 water_basins <- c("La Plata", 'Caribbean Coast', 'Magdalena', 'Orinoco', 'Amazon',
-                  'Colombia - Ecuador Pacific Coast')
+                  'Colombia - Ecuador Pacific Coast', 'Mar Chiquita', 'La Puna Region', 'Salinas Grandes', 
+                  'Pampas Region', 'North Argentina South Atlantic Coast', 'South America Colorado', 'Negro',
+                  'Central Patagonia Highlands', 'South Argentina South Atlantic Coast', 'South Chile Pacific Coast')
+
 filter_list <- water_basins
 filter_list_2 <- list("Basin_runoff_km3peryear" = water_basins)
-stored_in_dir <- 0  # = 1 if dragged whole xanthos folder off pic; 0 if just dragged file down into results dir on comp
+stored_in_dir <- 1  # = 1 if dragged whole xanthos folder off pic; 0 if just dragged file down into results dir on comp
+run_name <- c('clim_impacts')
 
 # Set base input files directory
-base_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/pic_impacts_runs'
-level2_out_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/pic_impacts_runs/level2'
-delta <- adjust_gcm_mean(base_dir, level2_out_dir, water_basins)
+level2_out_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/level2'
+extras_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output'
+delta <- adjust_gcm_mean(results_basepath, extras_dir, level2_out_dir, water_basins, time_scale, stored_in_dir, run_name, 
+                         xanthos_var_names)
 deltas_gcm_all <- delta$deltas_gcm_all
 runoff_gcm_all_GCAM <- delta$runoff_gcm_all_GCAM_2
 runoff_gcm_all_GCAM_3 <- delta$runoff_gcm_all_GCAM_3
