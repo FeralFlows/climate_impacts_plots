@@ -85,6 +85,7 @@ start_yr_hist <- 1970
 end_yr_hist <- 2009
 xanthos_var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 filter_list_2 <- list("actual_hydro_by_gcam_region_EJperyr" = country_list)
+y_ax_lbl <- expression(Annual~Hydropower~(TWh))
 for(var_1 in xanthos_var_names){
   for(reg in filter_list_2[[var_1]]){
     fig_name <- paste0(figures_basepath, '/', reg, "_", var_1, "_", 'gcm_rcp_facet.png')
@@ -133,11 +134,39 @@ region_single_plot(var_names, region_list, input, figures_basepath, start_yr, en
 # Plot country hydropower where all the GCM and RCP combinations are
 # combined on the same plot
 y_ax_lbl <- expression(Annual~Hydropower~(TWh))
-input <- df_2_all_runs_hydro %>% filter(year>=2009, year<=2100)
-roll <- 2
-start_yr <- 1970
+input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2100)
+roll <- 0
+start_yr <- 2010
 end_yr <- 2100
+start_yr_hist <- 1970
+end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
-                   roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist)
+                   roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
+                   all_same_color = 0, titles = 'Yes', legend_on=F)
+
+# Plot percentage reduction in 2010 hydropower production
+y_ax_lbl <- expression(Percentage~Change~2010~Hydropower~(TWh))
+input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2100)
+input['mean_2010'] <- 0 # add mean_2010 column
+for (reg in country_list){
+  for (gcm1 in gcm_names){
+    for (rcp1 in rcp_names){
+      print(paste(reg, gcm1, rcp1))
+      mean_val <- (input %>% filter(name==reg, gcm==gcm1, rcp==rcp1, year==2010))$smoothedY[1]
+      input <- input %>% mutate(mean_2010 = if_else(name==reg & gcm==gcm1 & rcp==rcp1, mean_val, mean_2010))
+    }
+  }
+}
+input <- input %>% mutate(smoothedY = (smoothedY-mean_2010)/mean_2010) %>% select(-mean_2010)
+roll <- 2  # COULD CHANGE THIS TO 2
+start_yr <- 2010
+end_yr <- 2100
+start_yr_hist <- 1970
+end_yr_hist <- 2010
+var_names <- c('actual_hydro_by_gcam_region_EJperyr')
+region_list <- country_list
+region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
+                   roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
+                   all_same_color = 0, titles = 'Yes', legend_on=F, plot_hist=FALSE)

@@ -58,7 +58,8 @@ line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_ma
 }
 
 line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_names, rolling=0, y_lbl=NULL,
-                                x_lbl=NULL, y_max=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE){
+                                x_lbl=NULL, y_max=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE, 
+                                plot_var=NULL, plot_hist=TRUE){
 
   line_colors<-get(plot_df$FillPalette)
   line_colors_hist<-get(plot_df_hist$FillPalette)
@@ -89,17 +90,23 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   plot_df_hist <- plot_df_hist %>% filter(rcp %in% c('historical', 'historical mean'))  # Store historical values in separate DF to be plotted
   #line_colors<-get(plot_df$FillPalette)
 
-  # First, add historical data
-  if(rolling==1){
-    p <- ggplot(data=plot_df_hist, mapping = aes(x = year, y = rolling_mean, colour=gcm, fill=gcm))
-  }else if(rolling==2){
-    p <- ggplot(data=plot_df_hist, mapping = aes(x = year, y = smoothedY))
+  # First, add historical data if user wants to plot it
+  if (plot_hist==TRUE){
+    if(rolling==1){
+      p <- ggplot(data=plot_df_hist, mapping = aes(x = year, y = rolling_mean, colour=gcm, fill=gcm))
+    }else if(rolling==2){
+      p <- ggplot(data=plot_df_hist, mapping = aes(x = year, y = smoothedY))
+    }else{
+      p <- ggplot(data=plot_df_hist, mapping = aes(x = year, y = value, colour=gcm, fill=gcm))
+    }
+    #p <- p + geom_line(size=0.5, color='black', data=plot_df_hist, mapping = aes(x = year, y = value))
+    p <- p + geom_line(size=0.5, color='black')
+    p <- p + geom_line()
   }else{
-    p <- ggplot(data=plot_df_hist, mapping = aes(x = year, y = value, colour=gcm, fill=gcm))
+    # Historical data not going to be plotted. Need to create new ggplot since it wasnt created above for hist plotting.
+    p <- ggplot()
   }
-  #p <- p + geom_line(size=0.5, color='black', data=plot_df_hist, mapping = aes(x = year, y = value))
-  p <- p + geom_line(size=0.5, color='black')
-  p <- p + geom_line()
+  
   if(all_same_color==1){
     color_var = 'steelblue4'
   }else{
@@ -226,7 +233,7 @@ xanthos_proc <- function(xanthos_var_names, xanthos_config_names, gcm_names, rcp
                 group_by(region, year) %>% summarize(value=sum(value)) %>% ungroup() %>% rename(name=region) %>%
                 filter(name %in% filter_list[[var]])
             }else if(var=='actual_hydro_by_gcam_region_EJperyr'){
-              rgn32Names <- read_csv('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/Rgn32Names.csv')
+              rgn32Names <- read_csv('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/Rgn32Names.csv')
               input <- read_csv(xanthos_output_filepath) %>% rename(id=region) %>% left_join(rgn32Names, by='id') %>%
                 select(-id) %>% gather(year, value, `1950`:`2099`) %>% rename(name=region) %>%
                 filter(name %in% filter_list[[var]]) %>% mutate(value=value*277.78)
@@ -269,8 +276,8 @@ xanthos_hist_proc <- function(xanthos_var_names, xanthos_config_names, df_all_ru
                 left_join(grid_country_map, by="id") %>% left_join(country_names_id_tbl, by="ctry_code") %>%
                 group_by(region, year) %>% summarize(value=sum(value)) %>% ungroup() %>% rename(name=region) %>%
                 filter(name %in% filter_list[[var]])
-            }else if (var=='actual_hydro_by_gcam_region_ej'){
-              rgn32Names <- read_csv('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/Rgn32Names.csv')
+            }else if (var=='actual_hydro_by_gcam_region_EJperyr'){
+              rgn32Names <- read_csv('C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/Rgn32Names.csv')
 #              input <- read_csv(xanthos_output_filepath) %>% left_join(rgn32Names, by='X1')
 #              select(-X1) %>% gather(year, value, `1950`:`2099`) %>% rename(name=region) %>%
 #                filter(name %in% filter_list[[var]])
@@ -379,7 +386,7 @@ roll_mean <- function(df_all_runs, xanthos_var_names, xanthos_config_names, gcm_
 
 region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figures_basepath, start_yr, end_yr,
                                gcm_names, rcp_names, roll, y_ax_lbl, trendline=1, combined_lines=0, plot_df_hist=NULL,
-                               all_same_color = 1, titles=NULL, legend_on=TRUE){
+                               all_same_color = 1, titles=NULL, legend_on=TRUE, plot_var=NULL, plot_hist=TRUE){
   for(var_1 in xanthos_var_names){
     for(reg in region_list){
       if(roll==1){
@@ -409,7 +416,7 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
         plot_df_hist_2 <- plot_df_hist %>% filter(name == reg, year<=2010)
         line_plot_hist_proj(plot_df, plot_df_hist_2, fig_name, gcm_names, rcp_names, rolling=roll, y_lbl=y_ax_lbl,
                             y_max=ymax_across_gcms, trendline=trendline, all_same_color=all_same_color, title=reg, 
-                            legend_on=legend_on)
+                            legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist)
       }
     }
   }
