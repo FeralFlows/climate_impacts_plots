@@ -40,9 +40,9 @@ stored_in_dir <- 1  # = 1 if dragged whole xanthos folder off pic; 0 if just dra
 # Add historical values to dataframe
 add_historical <- 1
 
-df_all_runs_hydro <- xanthos_proc(xanthos_var_names, xanthos_config_names, gcm_names, rcp_names, time_scale, results_basepath, 
+df_all_runs_hydro <- xanthos_proc(xanthos_var_names, xanthos_config_names, gcm_names, rcp_names, time_scale, results_basepath,
                                   filter_list_2)$output
-df_all_runs_hydro <- xanthos_hist_proc(xanthos_var_names, xanthos_config_names, df_all_runs_hydro, stored_in_dir, 
+df_all_runs_hydro <- xanthos_hist_proc(xanthos_var_names, xanthos_config_names, df_all_runs_hydro, stored_in_dir,
                                        results_basepath, filter_list_2, add_historical=add_historical)$output
 df_all_runs_hydro_hist <- df_all_runs_hydro %>% filter(rcp == 'historical')
 df_all_runs_hydro <- df_all_runs_hydro %>% filter(rcp != 'historical')
@@ -53,11 +53,11 @@ df_all_runs_hydro$year <- as.numeric(df_all_runs_hydro$year)
 adjust_delta <- 0
 if (adjust_delta==1){
   level2_out_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/level2'
-  deltas_gcm_all <- adjust_gcm_hydro_mean(results_basepath, extras_dir, level2_out_dir, country_list, time_scale, 
+  deltas_gcm_all <- adjust_gcm_hydro_mean(results_basepath, extras_dir, level2_out_dir, country_list, time_scale,
                                           stored_in_dir, run_name, xanthos_var_names)$deltas_gcm_all
-  df_all_runs_hydro <- df_all_runs_hydro %>% 
+  df_all_runs_hydro <- df_all_runs_hydro %>%
     left_join(deltas_gcm_all, by=c('name', 'gcm', 'rcp', 'year')) %>%
-    mutate(value = delta_factor*value) %>% 
+    mutate(value = delta_factor*value) %>%
     select(-delta_factor)
 }
 
@@ -65,17 +65,13 @@ df_all_runs_hydro_hist$year <- as.numeric(df_all_runs_hydro_hist$year)
 
 # Compute rolling mean
 # Projected
-df_2_all_runs_hydro <- roll_mean(df_all_runs_hydro, xanthos_var_names, xanthos_config_names, gcm_names_incl_hist, 
-                                 rcp_names_incl_hist, filter_list_2)$output
+df_2_all_runs_hydro <- roll_mean(df_all_runs_hydro, xanthos_var_names, xanthos_config_names, gcm_names_incl_hist,
+                                 rcp_names_incl_hist, filter_list_2, loess_span=1)$output
 df_2_all_runs_hydro$year <- as.numeric(df_2_all_runs_hydro$year)
 # Historical
-df_2_all_runs_hydro_hist <- roll_mean(df_all_runs_hydro_hist, xanthos_var_names, xanthos_config_names, gcm_names_incl_hist, 
-                                 rcp_names_incl_hist, filter_list_2)$output
+df_2_all_runs_hydro_hist <- roll_mean(df_all_runs_hydro_hist, xanthos_var_names, xanthos_config_names, gcm_names_incl_hist,
+                                 rcp_names_incl_hist, filter_list_2, loess_span=1)$output
 df_2_all_runs_hydro_hist$year <- as.numeric(df_2_all_runs_hydro_hist$year)
-
-# Compute percentage change from 2010 hydro value for each region of interest
-#df_2_all_runs_hydro <- hydro_perc_change(df_2_all_runs_hydro, country_list)
-
 
 # Create faceted plot across GCMs and RCPs for country hydropower production
 roll <- 0
@@ -89,7 +85,7 @@ y_ax_lbl <- expression(Annual~Hydropower~(TWh))
 for(var_1 in xanthos_var_names){
   for(reg in filter_list_2[[var_1]]){
     fig_name <- paste0(figures_basepath, '/', reg, "_", var_1, "_", 'gcm_rcp_facet.png')
-    plot_df <- df_2_all_runs_hydro %>% filter(name==reg, year>=start_yr, year<=end_yr, var==var_1) %>% 
+    plot_df <- df_2_all_runs_hydro %>% filter(name==reg, year>=start_yr, year<=end_yr, var==var_1) %>%
       filter(gcm %in% gcm_names_incl_hist, rcp %in% rcp_names_incl_hist)
     plot_df_hist <- df_all_runs_hydro_hist %>% filter(name==reg, year>=start_yr_hist, year<=end_yr_hist, var==var_1)
     facet_grid_plot(plot_df, fig_name, rolling=roll, y_lbl=y_ax_lbl, df_all_runs_hist=plot_df_hist, historical=1)
@@ -102,7 +98,7 @@ roll <- 2
 for(var_1 in xanthos_var_names){
   for(reg in filter_list_2[[var_1]]){
     fig_name <- paste0(figures_basepath, '/', reg, "_", var_1, "_", 'gcm_rcp_facet_smooth.png')
-    plot_df <- df_2_all_runs_hydro %>% filter(name==reg, year>=start_yr, year<=end_yr, var==var_1) %>% 
+    plot_df <- df_2_all_runs_hydro %>% filter(name==reg, year>=start_yr, year<=end_yr, var==var_1) %>%
       filter(gcm %in% gcm_names_incl_hist, rcp %in% rcp_names_incl_hist)
     plot_df_hist <- df_all_runs_hydro_hist %>% filter(name==reg, year>=start_yr_hist, year<=end_yr_hist, var==var_1)
     facet_grid_plot(plot_df, fig_name, rolling=roll, y_lbl=y_ax_lbl, df_all_runs_hist=plot_df_hist, historical=1)
@@ -117,7 +113,7 @@ start_yr <- 2010
 end_yr <- 2050
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list
-region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, 
+region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr,
                    gcm_names, rcp_names, roll, y_ax_lbl, trendline=0)
 
 # Smoothed Hydropower by Country
@@ -128,7 +124,7 @@ start_yr <- 2010
 end_yr <- 2050
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list
-region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, 
+region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr,
                    gcm_names, rcp_names, roll, y_ax_lbl, trendline=0)
 
 # Plot country hydropower where all the GCM and RCP combinations are
@@ -147,7 +143,7 @@ region_single_plot(var_names, region_list, input, figures_basepath, start_yr, en
                    all_same_color = 0, titles = 'Yes', legend_on=F)
 
 # Plot percentage reduction in 2010 hydropower production
-y_ax_lbl <- expression(Percentage~Change~2010~Hydropower~(TWh))
+y_ax_lbl <- expression(Change~('%')~'in'~hydropower~generation~from~2010)
 input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2100)
 input['mean_2010'] <- 0 # add mean_2010 column
 for (reg in country_list){
@@ -159,7 +155,7 @@ for (reg in country_list){
     }
   }
 }
-input <- input %>% mutate(smoothedY = (smoothedY-mean_2010)/mean_2010) %>% select(-mean_2010)
+input <- input %>% mutate(smoothedY = 100*(smoothedY-mean_2010)/mean_2010) %>% select(-mean_2010)
 roll <- 2  # COULD CHANGE THIS TO 2
 start_yr <- 2010
 end_yr <- 2100
@@ -169,4 +165,4 @@ var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
-                   all_same_color = 0, titles = 'Yes', legend_on=F, plot_hist=FALSE)
+                   all_same_color = 0, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red')

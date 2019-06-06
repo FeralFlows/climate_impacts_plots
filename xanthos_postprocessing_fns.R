@@ -3,8 +3,8 @@ library(tidyverse)
 #-----------------------------------------------------
 # FUNCTIONS
 
-line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_max=NULL, trendline=1, title=TRUE, 
-                      legend_on=TRUE){
+line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1, 
+                      title=TRUE, legend_on=TRUE){
 
   # ggplot2 Theme
   z_theme <<- theme_bw() +
@@ -46,7 +46,7 @@ line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_ma
   }
   # Add historical points onto every plot
   p <- p + xlab(x_lbl) + ylab(y_lbl)
-  p<-p + scale_y_continuous(limits=c(0,1.1*y_max))
+  p<-p + scale_y_continuous(limits=c(y_min - 0.1*y_min,1.1*y_max))
 
   p<-p + scale_color_manual(values=line_colors)
   p <- p + ggtitle(title)
@@ -58,7 +58,7 @@ line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_ma
 }
 
 line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_names, rolling=0, y_lbl=NULL,
-                                x_lbl=NULL, y_max=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE, 
+                                x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE, 
                                 plot_var=NULL, plot_hist=TRUE){
 
   line_colors<-get(plot_df$FillPalette)
@@ -146,7 +146,7 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   }
   
   p <- p + xlab(x_lbl) + ylab(y_lbl)
-  p<-p + scale_y_continuous(limits=c(0,1.1*y_max))
+  p<-p + scale_y_continuous(limits=c(y_min - 0.1*y_min, 1.1*y_max))
   p<-p + scale_color_manual(values=line_colors, name = "Time Scale")
   p<-p + scale_color_manual(values=line_colors_hist)
   if(legend_on==FALSE){
@@ -386,15 +386,18 @@ roll_mean <- function(df_all_runs, xanthos_var_names, xanthos_config_names, gcm_
 
 region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figures_basepath, start_yr, end_yr,
                                gcm_names, rcp_names, roll, y_ax_lbl, trendline=1, combined_lines=0, plot_df_hist=NULL,
-                               all_same_color = 1, titles=NULL, legend_on=TRUE, plot_var=NULL, plot_hist=TRUE){
+                               all_same_color = 1, titles=NULL, legend_on=TRUE, plot_var='', plot_hist=TRUE){
   for(var_1 in xanthos_var_names){
     for(reg in region_list){
       if(roll==1){
         ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$rolling_mean)
+        ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$rolling_mean)
       }else if(roll==2){
         ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$smoothedY)
+        ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$smoothedY)
       }else{
         ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$value)
+        ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$value)
       }
       if(is.null(titles)){
         title=NULL
@@ -403,19 +406,20 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
       }
       if(combined_lines == 0){
         for(gcm1 in gcm_names){
-          fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", gcm1, "_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
+          fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", gcm1, "_", plot_var, "_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
           plot_df <- df_all_runs %>%
             filter(name==reg, gcm==gcm1, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
-          line_plot(plot_df, fig_name, rolling=roll, y_lbl=y_ax_lbl, y_max=ymax_across_gcms, trendline=trendline, title=reg, 
-                    legend_on=legend_on)
+          line_plot(plot_df, fig_name, rolling=roll, y_lbl=y_ax_lbl, y_max=ymax_across_gcms, y_min=ymin_across_gcms,
+                    trendline=trendline, title=reg, legend_on=legend_on)
         }
       }else{
-        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_combined_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
+        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", plot_var, "_", "_combined_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
         plot_df <- df_all_runs %>%
           filter(name==reg, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
         plot_df_hist_2 <- plot_df_hist %>% filter(name == reg, year<=2010)
         line_plot_hist_proj(plot_df, plot_df_hist_2, fig_name, gcm_names, rcp_names, rolling=roll, y_lbl=y_ax_lbl,
-                            y_max=ymax_across_gcms, trendline=trendline, all_same_color=all_same_color, title=reg, 
+                            y_max=ymax_across_gcms, y_min=ymin_across_gcms, trendline=trendline, 
+                            all_same_color=all_same_color, title=reg, 
                             legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist)
       }
     }
