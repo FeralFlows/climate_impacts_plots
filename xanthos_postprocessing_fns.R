@@ -69,8 +69,8 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
     theme(
       text =                element_text(family = NULL, face = "plain",colour = "black", size = 8 ,hjust = 0.5, 
                                          vjust = 0.5, angle = 0, lineheight = 0.9)
-      , axis.text.x =       element_text(size=8)
-      , axis.text.y =       element_text(size=8)
+      , axis.text.x =       element_text(size=6)
+      , axis.text.y =       element_text(size=6)
       ,axis.title.x =       element_text(vjust = -1, margin=margin(t=1,unit="line"))
       ,axis.title.y =       element_text(angle = 90, vjust = 2, margin=margin(r=1,unit="line"))
       ,legend.key =         element_blank()
@@ -488,7 +488,7 @@ adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, basins_filter,
   # plot as GCM projections, because there is a discontinuity starting in 2010 for some GCMs.
   
   # 2) After performing this correction, the function then smooths the future projections with a LOESS
-  # filter, but importantly does so using the historical data in the set, so that you get a smooth 
+  # filter, but importantly does so using the historical data as part of the smoothing set, so that you get a smooth 
   # continuity between historical and future data points. The function then sets historical points
   # equal to the historical mean.
   

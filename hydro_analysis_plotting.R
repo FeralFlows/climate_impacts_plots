@@ -39,6 +39,7 @@ run_name <- c('clim_impacts')
 stored_in_dir <- 1  # = 1 if dragged whole xanthos folder off pic; 0 if just dragged file down into results dir on comp
 # Add historical values to dataframe
 add_historical <- 1
+delta_correction <- 1
 
 df_all_runs_hydro <- xanthos_proc(xanthos_var_names, xanthos_config_names, gcm_names, rcp_names, time_scale, results_basepath,
                                   filter_list_2)$output
@@ -49,18 +50,54 @@ df_all_runs_hydro <- df_all_runs_hydro %>% filter(rcp != 'historical')
 
 df_all_runs_hydro$year <- as.numeric(df_all_runs_hydro$year)
 
-# Adjust by delta factors
-adjust_delta <- 0
-if (adjust_delta==1){
-  level2_out_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/level2'
-  deltas_gcm_all <- adjust_gcm_hydro_mean(results_basepath, extras_dir, level2_out_dir, country_list, time_scale,
-                                          stored_in_dir, run_name, xanthos_var_names)$deltas_gcm_all
-  df_all_runs_hydro <- df_all_runs_hydro %>%
-    left_join(deltas_gcm_all, by=c('name', 'gcm', 'rcp', 'year')) %>%
-    mutate(value = delta_factor*value) %>%
-    select(-delta_factor)
+
+
+# Process GCAM hydro values
+gcam_ref_hydro_basepath <- '//essi12.umd.edu/documents/twild/Documents/idb_colombia_ref/reference/Electricity/Colombia_reference_hydro.csv'
+gcam_ref_hydro_traject <- read.csv(gcam_ref_hydro_basepath, skip = 4)
+gcam_ref_hydro_basepath <- '//essi12.umd.edu/documents/twild/Documents/idb_uruguay_ref/reference/Electricity/Uruguay_reference_hydro.csv'
+gcam_ref_hydro_traject <- rbind(gcam_ref_hydro_traject, read.csv(gcam_ref_hydro_basepath, skip = 4))
+gcam_ref_hydro_basepath <- '//essi12.umd.edu/documents/twild/Documents/idb_argentina_ref/reference/Electricity/Argentina_reference_hydro.csv'
+gcam_ref_hydro_traject<- rbind(gcam_ref_hydro_traject, read.csv(gcam_ref_hydro_basepath, skip = 4))
+gcam_ref_hydro_traject <- gcam_ref_hydro_traject %>% select(-supplysector, -subsector, -stub.technology, -share.weight) %>% 
+  rename(value=fixedOutput)
+gcam_ref_hydro_traject_final <- gcam_ref_hydro_traject[FALSE,]
+# Loop through years, and add year row if it doesnt already exist
+year_vector <- 2010:2100
+gcam_year_list <- gcam_ref_hydro_traject$period
+for (reg in country_list){
+  append_row <- data.frame('region'=reg, 'period'=9999, 'value' = NA, 'delta'=1)
+  temp <- gcam_ref_hydro_traject %>% filter(region==reg) %>% mutate('delta'=1)
+  for(t in year_vector){
+    if(!t %in% unique(gcam_year_list)){
+      append_row$period <- t
+      temp <- rbind(temp, append_row)
+    }
+  }
+  temp <- temp %>% mutate(value=na.approx(value, period))  # interpolate value between gcam time steps
+  value_2010 <- (gcam_ref_hydro_traject %>% filter(region==reg, period==2010))$value[1]
+  temp <- temp %>% mutate(delta = value/value_2010)
+  gcam_ref_hydro_traject_final <- rbind(gcam_ref_hydro_traject_final, temp)
 }
 
+# calculate delta values for all years
+gcam_ref_hydro_traject_final <- gcam_ref_hydro_traject_final %>% rename(name=region, year=period)
+#-----------------------------------------------------------------------------------------------------------------------
+# Section temporarily removed because it was originally applied to conduct a secondary bias correction (see description)
+# in function documentation for further details.
+
+# Adjust by delta factors
+#adjust_delta <- 0
+#if (adjust_delta==1){
+#  level2_out_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/level2'
+#  deltas_gcm_all <- adjust_gcm_hydro_mean(results_basepath, extras_dir, level2_out_dir, country_list, time_scale,
+#                                          stored_in_dir, run_name, xanthos_var_names)$deltas_gcm_all
+#  df_all_runs_hydro <- df_all_runs_hydro %>%
+#    left_join(deltas_gcm_all, by=c('name', 'gcm', 'rcp', 'year')) %>%
+#    mutate(value = delta_factor*value) %>%
+#    select(-delta_factor)
+#}
+#-----------------------------------------------------------------------------------------------------------------------
 df_all_runs_hydro_hist$year <- as.numeric(df_all_runs_hydro_hist$year)
 
 # Compute rolling mean
@@ -72,6 +109,17 @@ df_2_all_runs_hydro$year <- as.numeric(df_2_all_runs_hydro$year)
 df_2_all_runs_hydro_hist <- roll_mean(df_all_runs_hydro_hist, xanthos_var_names, xanthos_config_names, gcm_names_incl_hist,
                                  rcp_names_incl_hist, filter_list_2, loess_span=1)$output
 df_2_all_runs_hydro_hist$year <- as.numeric(df_2_all_runs_hydro_hist$year)
+
+# Apply delta factor for installed capacity to the smoothed future hydro gen values that are only affected by runoff.
+df_2_all_runs_hydro <- df_2_all_runs_hydro %>% left_join(gcam_ref_hydro_traject_final %>% select(-value), by=c('name', 'year'))
+df_2_all_runs_hydro$delta[is.na(df_2_all_runs_hydro$delta)] <- 1  # Set NA values to 1
+# adjust smoothedY and rolling_mean by delta, and then remove delta column
+df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(RollingMeanDelta=rolling_mean*delta) %>% 
+  mutate(smoothedYDelta=smoothedY*delta) %>% select(-delta)
+# Adjust smoothedY so it does or does not reflect a delta correction, depending on user preferences
+if(delta_correction==1){
+  df_2_all_runs_hydro$smoothedY <- df_2_all_runs_hydro$smoothedYDelta
+}
 
 # Create faceted plot across GCMs and RCPs for country hydropower production
 roll <- 0
@@ -143,7 +191,8 @@ region_single_plot(var_names, region_list, input, figures_basepath, start_yr, en
                    all_same_color = 0, titles = 'Yes', legend_on=F)
 
 # Plot percentage reduction in 2010 hydropower production
-y_ax_lbl <- expression(Change~('%')~'in'~hydropower~generation~from~2010)
+y_ax_lbl <- expression(atop(Change~('%')~'in'~hydropower,
+                       ~generation~from~2010))
 input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2100)
 input['mean_2010'] <- 0 # add mean_2010 column
 for (reg in country_list){
@@ -156,7 +205,7 @@ for (reg in country_list){
   }
 }
 input <- input %>% mutate(smoothedY = 100*(smoothedY-mean_2010)/mean_2010) %>% select(-mean_2010)
-roll <- 2  # COULD CHANGE THIS TO 2
+roll <- 2
 start_yr <- 2010
 end_yr <- 2100
 start_yr_hist <- 1970
