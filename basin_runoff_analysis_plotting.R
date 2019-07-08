@@ -67,12 +67,16 @@ df_all_runs_basin_hist <- df_all_runs_basin %>% filter(rcp == 'historical')
 df_all_runs_basin <- df_all_runs_basin %>% filter(rcp != 'historical')
 df_all_runs_basin$year <- as.numeric(df_all_runs_basin$year)
 # Adjust by delta factors
+df_all_runs_basin_hist$year <- as.numeric(df_all_runs_basin_hist$year)
 df_all_runs_basin <- df_all_runs_basin %>% 
   left_join(deltas_gcm_all, by=c('name', 'gcm', 'rcp', 'year')) %>%
   mutate(value = delta_factor*value) %>% 
   select(-delta_factor)
+#df_all_runs_basin_hist <- df_all_runs_basin_hist %>% 
+#  left_join(deltas_gcm_all, by=c('name', 'gcm', 'rcp', 'year')) %>%
+#  mutate(value = delta_factor*value) %>% 
+#  select(-delta_factor)
 df_all_runs_basin$year <- as.numeric(df_all_runs_basin$year)
-df_all_runs_basin_hist$year <- as.numeric(df_all_runs_basin_hist$year)
 
 # Compute rolling mean--BASIN
 roll_window <- 1  # Establish target window for rolling mean; k=1 is no rolling mean, just returns regular values.
@@ -254,3 +258,10 @@ var <- "GrdRenewRsrcMax" #  "AgProdChange"
 csvpath <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/water_avail' # "data/scenario_agprodchange_gcam513_annual"
 xmlpath <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/water_avail/xml'  # "data/scenario_agprodchange_gcam513_annual/xml"
 csv2xml(csvpath, xmlpath, var)
+
+# Plots to confirm delta scaling and smoothing worked correctly
+df_plot <- df_2_all_runs_basin %>% filter(gcm=='GFDL-ESM2M', rcp=='rcp4p5', name=='Magdalena')
+p <- ggplot(data=df_plot) + geom_line(mapping = aes(x = year, y = value, colour=gcm))
+p <- p + geom_line(color='blue', mapping = aes(x = year, y = smoothedY))
+p <- p + geom_line(color='green', mapping = aes(x = year, y = clim_imp_val))
+p

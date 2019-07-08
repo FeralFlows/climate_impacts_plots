@@ -246,9 +246,7 @@ adjust_gcm_hydro_mean <- function(base_dir, extras_dir, level2_out_dir, country_
 input <- input %>% filter(gcm == !! clim_mod, rcp == !! forc)
 if(!is.null(basin_ids)){
   input <- input %>% left_join(basin_ids, by = c("id" = "GCAM_basin_ID"))
-  print("check")
 }
-print("Checkl2")
 input %>% 
   mutate(renewresource = paste0(GCAM_basin_name, "-water withdrawals")) %>% 
   left_join(region_basin) %>% 
