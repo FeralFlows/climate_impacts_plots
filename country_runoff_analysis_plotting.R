@@ -44,9 +44,10 @@ country_names_id <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling
 
 filter_list_3 <- list("q_km3peryear" = country_list)
 df_all_runs_ctry <- xanthos_proc(gridded_runoff, xanthos_config_names, gcm_names, rcp_names, time_scale, results_basepath,
-                                 filter_list_3, country_grid_id_filepath=country_grid_id_filepath, country_names_id=country_names_id)$output
+                                 filter_liist=filter_list_3, country_grid_id_filepath=country_grid_id_filepath, 
+                                 country_names_id=country_names_id)$output
 df_all_runs_ctry <- xanthos_hist_proc(gridded_runoff, xanthos_config_names, df_all_runs_ctry, stored_in_dir,
-                                      results_basepath, filter_list_3, add_historical=add_historical,
+                                      results_basepath, add_historical, filter_list = filter_list_3,
                                       country_grid_id_filepath=country_grid_id_filepath,
                                       country_names_id=country_names_id)$output
 df_all_runs_ctry_hist <- df_all_runs_ctry %>% filter(rcp == 'historical')
@@ -57,12 +58,12 @@ df_all_runs_ctry_hist$year <- as.numeric(df_all_runs_ctry_hist$year)
 # Compute rolling mean--COUNTRY
 roll_window <- 1  # Establish target window for rolling mean; k=1 is no rolling mean, just returns regular values.
 df_2_all_runs_ctry <- roll_mean(df_all_runs_ctry, gridded_runoff, xanthos_config_names, gcm_names_incl_hist,
-                                rcp_names_incl_hist, filter_list_3, k=roll_window)$output
+                                rcp_names_incl_hist, region_list = filter_list_3, k=roll_window)$output
 df_2_all_runs_ctry$year <- as.numeric(df_2_all_runs_ctry$year)
 gcm_names_TEMP_hist <- 'watch+wfdei'
 rcp_names_TEMP_hist <- 'historical'
 df_2_all_runs_ctry_hist <- roll_mean(df_all_runs_ctry_hist, gridded_runoff, xanthos_config_names, gcm_names_TEMP_hist,
-                                     rcp_names_TEMP_hist, filter_list_3, k=1)$output
+                                     rcp_names_TEMP_hist, region_list=filter_list_3, k=1)$output
 df_2_all_runs_ctry_hist$year <- as.numeric(df_2_all_runs_ctry_hist$year)
 
 # Runoff: countries
