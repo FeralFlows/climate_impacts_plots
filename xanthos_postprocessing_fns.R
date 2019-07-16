@@ -72,10 +72,10 @@ line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_ma
 
 line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_names, rolling=0, y_lbl=NULL,
                                 x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE, 
-                                plot_var=NULL, plot_hist=TRUE, x_min=NULL, x_max=NULL){
+                                plot_var=NULL, plot_hist=TRUE, x_min=NULL, x_max=NULL, plot_reference=NULL, 
+                                gcm_list=NULL, rcp_list=NULL){
 
   line_colors<-get(plot_df$FillPalette)
-  line_colors_hist<-get(plot_df_hist$FillPalette)
 
   # ggplot2 Theme
   z_theme <<- theme_bw() +
@@ -100,9 +100,13 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   prettyBreaksyMaster<-5
   '%ni%' <- Negate('%in%')
   plot_df_orig <- plot_df %>% filter(rcp %ni% c('historical', 'historical mean'))  # Eliminate out historical if it exists
-  plot_df_hist <- plot_df_hist %>% filter(rcp %in% c('historical', 'historical mean'))  # Store historical values in separate DF to be plotted
-  #line_colors<-get(plot_df$FillPalette)
 
+  if(!is.null(plot_df_hist)){
+    line_colors_hist<-get(plot_df_hist$FillPalette)
+    plot_df_hist <- plot_df_hist %>% filter(rcp %in% c('historical', 'historical mean'))  # Store historical values in separate DF to be plotted
+  }
+  #line_colors<-get(plot_df$FillPalette)
+  
   # First, add historical data if user wants to plot it
   if (plot_hist==TRUE){
     if(rolling==1){
@@ -145,28 +149,57 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
           p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = smoothedY,
                                                                                           colour=gcm))          
         }
+
       }else{
         if(all_same_color==1){ 
           p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = value, 
                                                                                              colour=gcm))
         }else{
-          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = value, 
-                                                                                          colour=gcm))          
+          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = value, colour=gcm))          
         }
       }      
       
     }
   }
   
+  # Plot reference scenario
+  if(!is.null(plot_reference)){
+    p <- p + geom_line(size=0.5, linetype=2, color = 'red', data=filtered_df, mapping = aes(x = year, y = reference))
+  }
+      
+  # SO far, only adding this colored gcm/rcp plots for smoothedY
+  # Plot select subset of gcms. Maximum of two lines, or will generate error
+  if(rolling==2){
+    ctr <- 0
+    color_list <- c('#fc9272', '#de2d26')
+    if(!is.null(gcm_list)){
+      for(model in gcm_list){
+        for(forc in rcp_list){
+          ctr <- ctr + 1
+          if(ctr>2){
+            Print("error: currently can only plot 2 lines of individual gcms/rcps as one color")
+          }
+          plot_df_orig_2 <- plot_df_orig %>% filter(gcm == model, rcp==forc)  # , rcp == c('rcp2p6')
+          plot_df_orig_2$gcm <- as.character(plot_df_orig_2$gcm)
+          plot_df_orig_2$rcp <- as.character(plot_df_orig_2$rcp)
+          p <- p + geom_line(size=0.5, linetype=2, color = color_list[ctr], 
+                             data=plot_df_orig_2, mapping = aes(x = year, y = smoothedY))
+        }
+      }
+    }
+  }  
+  
   p <- p + xlab(x_lbl) + ylab(y_lbl)
   if(!is.null(y_min)){
-    p<-p + scale_y_continuous(limits=c(y_min - 0.1*y_min, 1.1*y_max))
+    p<-p + scale_y_continuous(limits=c(y_min - 0.1*abs(y_min), 1.1*y_max))
   }
   if(!is.null(x_min)){
     p<-p + scale_x_continuous(limits=c(x_min, x_max))
   }
   p<-p + scale_color_manual(values=line_colors, name = "Time Scale")
-  p<-p + scale_color_manual(values=line_colors_hist)
+  if(!is.null(plot_df_hist)){
+    p<-p + scale_color_manual(values=line_colors_hist)
+  }
   if(legend_on==FALSE){
     p <- p + guides(color=legend_on)
   }
@@ -191,7 +224,6 @@ facet_grid_plot <- function(plot_df, fig_name, historical=0, rolling=0, y_lbl=NU
   }else{
       p <- ggplot(data=plot_df_orig, mapping = aes(x = year, y = value, colour=gcm))
   }
-
   # p <- p + geom_smooth(method=lm, colour='black', size=0.5, se=FALSE)  # Linear best fit line
   p <- p + geom_line(size=0.5) #  Used to be first: geom_point(size=0) +  #, se=FALSE, , linetype=gcm
 
@@ -370,7 +402,7 @@ agmip_proc <- function(agmip_var_names, agmip_config_names, gcm_names, rcp_names
               input['gcm'] <- gcm
               input['rcp'] <- rcp
               input['ssp'] <- ssp
-              input['FillPalette'] <- c('rcp_colors')
+              input['FillPalette'] <- c('gcm_colors')
               df_all_runs <- rbind(df_all_runs, input)
             }
           }
@@ -415,7 +447,7 @@ roll_mean <- function(df_all_runs, xanthos_var_names, xanthos_config_names, gcm_
 region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figures_basepath, start_yr, end_yr,
                                gcm_names, rcp_names, roll, y_ax_lbl, trendline=1, combined_lines=0, plot_df_hist=NULL,
                                all_same_color = 1, titles=NULL, legend_on=TRUE, plot_var='', plot_hist=TRUE, xmin=NULL,
-                               xmax=NULL){
+                               xmax=NULL, plot_reference=NULL, fig_name_append=NULL, gcm_list=NULL, rcp_list=NULL){
   for(var_1 in xanthos_var_names){
     for(reg in region_list){
       if(roll==1){
@@ -442,14 +474,19 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
                     trendline=trendline, title=reg, legend_on=legend_on, x_min=xmin, x_max=xmax)
         }
       }else{
-        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", plot_var, "_", "_combined_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
+        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", plot_var, "_", fig_name_append, '_', "_combined_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
         plot_df <- df_all_runs %>%
           filter(name==reg, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
-        plot_df_hist_2 <- plot_df_hist %>% filter(name == reg, year<=2010)
+        if(plot_hist==TRUE){
+          plot_df_hist_2 <- plot_df_hist %>% filter(name == reg, year<=2010)
+        }else{
+          plot_df_hist_2 <- NULL
+        }
         line_plot_hist_proj(plot_df, plot_df_hist_2, fig_name, gcm_names, rcp_names, rolling=roll, y_lbl=y_ax_lbl,
                             y_max=ymax_across_gcms, y_min=ymin_across_gcms, x_min=xmin, x_max=xmax,
                             trendline=trendline, all_same_color=all_same_color, title=reg, 
-                            legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist)
+                            legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist, plot_reference=plot_reference, 
+                            gcm_list=gcm_list, rcp_list=rcp_list)
       }
     }
   }
@@ -572,8 +609,7 @@ adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, time_scale, st
     summarise(runoff = mean(runoff)) %>% 
     mutate(gcm = "wfdei") ->
     runoff_mean_wfdei_hist
-  View(runoff_mean_wfdei_hist)
-  
+
   bind_rows(
     get_gcm("GFDL-ESM2M", "2p6", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("GFDL-ESM2M", "4p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
     get_gcm("GFDL-ESM2M", "6p0", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("GFDL-ESM2M", "8p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
@@ -610,9 +646,7 @@ adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, time_scale, st
     group_by(gcm, rcp, id) %>% 
     summarise(mean_runoff = mean(runoff)) %>% ungroup() ->
     runoff_gcm_baseline_means
-  View(runoff_gcm_baseline_means)
-  View(runoff_gcm_all)
-  
+
   runoff_gcm_all %>%
     left_join(runoff_gcm_baseline_means,
               by = c("id", "gcm", "rcp")) %>%
@@ -621,7 +655,6 @@ adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, time_scale, st
     mutate(delta_factor = mean_runoff / hist_mean) %>%
     select(id, year, gcm, rcp, delta_factor) ->
     deltas_gcm_all
-  View(deltas_gcm_all)
   # filter(id == 36) %>% 
   # ggplot(aes(year,delta_factor, colour = gcm)) +
   # geom_line() + facet_wrap(~rcp)
@@ -916,7 +949,7 @@ adjust_gcm_mean_country <- function(base_dir, extras_dir, level2_out_dir, countr
 
   # Modify deltas_gcm_all to include basins so it can be  used in separate plotting module that organizes by basin.
   read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(deltas_gcm_all, by='id') %>% 
-    select(-id) %>% filter(name %in% basins_filter) ->deltas_gcm_all
+    select(-id) %>% filter(name %in% basins_filter) -> deltas_gcm_all
   read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_adj_smooth, by='id') %>% 
     select(-id) %>% filter(name %in% basins_filter) %>% rename(value=runoff_km3perYr) ->runoff_gcm_all_adj_smooth
   read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_2, by='id') %>% 
@@ -929,7 +962,7 @@ adjust_gcm_mean_country <- function(base_dir, extras_dir, level2_out_dir, countr
 
 write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable, 
                            basin_ids=NULL, region_basin=FALSE, renewrsc_max_gcam=FALSE, level2_out_dir=FALSE,
-                           L201.GrdRenewRsrcMax_runoff=FALSE){
+                           L201.GrdRenewRsrcMax_runoff=FALSE, gcam_xanthos_basin_mapping=NULL){
   # Process data
   for(clim_mod in gcms){ 
     for (forc in rcps){
@@ -943,6 +976,7 @@ write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable
         export_df[[col_name]] <- 'hydro'
         col_name <- c('share.weight.year')  # 'share-weight'
         export_df[[col_name]] <- 0
+        export_df <- export_df %>% mutate(share.weight.year=year)
         export_df$subs.share.weight <- 0
         export_df$tech.share.weight <- 0
         # save file
@@ -958,13 +992,22 @@ write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable
         write.table(export_df, paste0(csv_basepath, '/', fileName), append=TRUE, col.names=TRUE, row.names = FALSE, 
                     sep=',', quote=FALSE)
       }else if(variable=='runoff'){
-        print(input)
         export_df <- input %>% filter(gcm == clim_mod, rcp == forc, year %in% gcam_years) %>% 
           rename(year.fillout=year) %>% 
-          mutate(sub.renewable.resource='runoff') %>% 
+          mutate(sub.renewable.resource='runoff')
+        if(!is.null(gcam_xanthos_basin_mapping)){
+          mapping_file <- read.csv(gcam_xanthos_basin_mapping)
+          export_df <- export_df %>% 
+            left_join(mapping_file, by=c('name')) %>% 
+            select(-name) %>%
+            rename(name = GCAM.basin.name)
+        }
+        export_df <- export_df %>%   
           mutate(renewresource = paste0(name, "-water withdrawals")) %>%
-          left_join(region_basin, by=c('renewresource')) %>% 
+          left_join(region_basin, by=c('renewresource')) %>% print() %>% 
           rename(maxSubResource=clim_imp_val) %>%
+          mutate(renewresource=str_replace_all(renewresource, '-water withdrawals', '_water withdrawals')) %>% 
+          filter(region!="NA") %>% 
           select(region, renewresource, sub.renewable.resource, year.fillout, maxSubResource)
         
         renewrsc_max_gcam <- paste0(extras_dir, '/', "L201.RenewRsrcCurves_calib_watergap.csv")

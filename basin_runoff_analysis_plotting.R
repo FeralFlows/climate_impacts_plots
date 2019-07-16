@@ -26,7 +26,6 @@ gcm_colors <- c("NorESM1-M" = "#736F6E",
                 "watch+wfdei" = 'black',
                 'historical' = 'black',
                 'historical mean' = 'black')
-
 figures_basepath <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/figures/basin'
 results_basepath <- 'C:/Users/twild/all_git_repositories/Xanthos_final_4/example/output'
 xanthos_config_names <- c('clim_impacts')
@@ -37,20 +36,21 @@ rcp_names_incl_hist <- append(rcp_names, "historical")
 xanthos_var_names <- c('Basin_runoff_km3peryear')
 time_scale <- '1950_2099'
 water_basins_plot <- c("La Plata", 'Caribbean Coast', 'Magdalena', 'Orinoco', 'Amazon',
-                  'Colombia - Ecuador Pacific Coast', 'Mar Chiquita', 'La Puna Region', 'Salinas Grandes', 
+                  'Colombia - Ecuador Pacific Coast', 'Mar Chiquita', 'La Puna Region', 'Salinas Grandes',
                   'Pampas Region', 'North Argentina South Atlantic Coast', 'South America Colorado', 'Negro',
-                  'Central Patagonia Highlands', 'South Argentina South Atlantic Coast', 'South Chile Pacific Coast')
+                  'Central Patagonia Highlands', 'South Argentina South Atlantic Coast', 'South Chile Pacific Coast',
+                  'Uruguay - Brazil South Atlantic Coast')
 
 filter_list_2 <- list("Basin_runoff_km3peryear" = water_basins_plot)
 stored_in_dir <- 1  # = 1 if dragged whole xanthos folder off pic; 0 if just dragged file down into results dir on comp
 run_name <- c('clim_impacts')
-gcam_years <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075, 
+gcam_years <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075,
                 2080, 2085, 2090, 2095, 2100)
 
 # Set base input files directory
 level2_out_dir <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/water_avail'
 extras_dir <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output'
-delta <- adjust_gcm_mean(results_basepath, extras_dir, level2_out_dir, time_scale, stored_in_dir, run_name, 
+delta <- adjust_gcm_mean(results_basepath, extras_dir, level2_out_dir, time_scale, stored_in_dir, run_name,
                          xanthos_var_names)
 deltas_gcm_all <- delta$deltas_gcm_all
 runoff_gcm_all_GCAM <- delta$runoff_gcm_all_GCAM_2
@@ -59,7 +59,7 @@ runoff_gcm_all_GCAM_3 <- delta$runoff_gcm_all_GCAM_3
 # Read in xanthos runoff data; separate out historical and projected data
 add_historical <- 1  # Add historical values to dataframe
 
-df_all_runs_basin <- xanthos_proc(xanthos_var_names, xanthos_config_names, gcm_names, rcp_names, time_scale, 
+df_all_runs_basin <- xanthos_proc(xanthos_var_names, xanthos_config_names, gcm_names, rcp_names, time_scale,
                                   results_basepath)$output
 df_all_runs_basin <- xanthos_hist_proc(xanthos_var_names, xanthos_config_names, df_all_runs_basin, stored_in_dir,
                                        results_basepath, add_historical)$output
@@ -68,13 +68,13 @@ df_all_runs_basin <- df_all_runs_basin %>% filter(rcp != 'historical')
 df_all_runs_basin$year <- as.numeric(df_all_runs_basin$year)
 # Adjust by delta factors
 df_all_runs_basin_hist$year <- as.numeric(df_all_runs_basin_hist$year)
-df_all_runs_basin <- df_all_runs_basin %>% 
+df_all_runs_basin <- df_all_runs_basin %>%
   left_join(deltas_gcm_all, by=c('name', 'gcm', 'rcp', 'year')) %>%
-  mutate(value = delta_factor*value) %>% 
+  mutate(value = delta_factor*value) %>%
   select(-delta_factor)
-#df_all_runs_basin_hist <- df_all_runs_basin_hist %>% 
+#df_all_runs_basin_hist <- df_all_runs_basin_hist %>%
 #  left_join(deltas_gcm_all, by=c('name', 'gcm', 'rcp', 'year')) %>%
-#  mutate(value = delta_factor*value) %>% 
+#  mutate(value = delta_factor*value) %>%
 #  select(-delta_factor)
 df_all_runs_basin$year <- as.numeric(df_all_runs_basin$year)
 
@@ -84,7 +84,7 @@ df_2_all_runs_basin <- roll_mean(df_all_runs_basin, xanthos_var_names, xanthos_c
                                  rcp_names_incl_hist, k=roll_window)$output
 df_2_all_runs_basin$year <- as.numeric(df_2_all_runs_basin$year)
 
-# Compute the mean value, store it for every gcm/rcp combo. Also compute the percent change in every year relative to 
+# Compute the mean value, store it for every gcm/rcp combo. Also compute the percent change in every year relative to
 # that mean, and store that
 df_2_all_runs_basin['mean_2010'] <- 0 # add mean_2010 column
 country_list_full <- unique(df_2_all_runs_basin$name)
@@ -101,15 +101,15 @@ df_2_all_runs_basin <- df_2_all_runs_basin %>% mutate(clim_imp_perc = 100*(smoot
 # Compute historical average, and insert that into historical dataframe (df_all_runs_basin_hist)
 df_all_runs_basin_hist$mean_hist <- 0
 for(reg in country_list_full){
-  df_all_runs_basin_hist <- df_all_runs_basin_hist %>% 
+  df_all_runs_basin_hist <- df_all_runs_basin_hist %>%
     mutate(mean_hist=if_else(name==reg, mean((df_all_runs_basin_hist %>% filter(name==reg))$value), mean_hist))
   merge_df_hist <- df_all_runs_basin_hist %>% filter(year==2010) %>% select(name, mean_hist)
 }
 
-# Merge historical averages with df_2_all_runs_basin to compute percentage changes that are projected to occur relative 
+# Merge historical averages with df_2_all_runs_basin to compute percentage changes that are projected to occur relative
 # to historical averages.
 df_2_all_runs_basin <- df_2_all_runs_basin %>% left_join(merge_df_hist, by=c('name'))
-df_2_all_runs_basin <- df_2_all_runs_basin %>% mutate(clim_imp_val=mean_hist+mean_hist*(clim_imp_perc/100)) %>% 
+df_2_all_runs_basin <- df_2_all_runs_basin %>% mutate(clim_imp_val=mean_hist+mean_hist*(clim_imp_perc/100)) %>%
   mutate(clim_imp_val=if_else(clim_imp_val<0,0,clim_imp_val))
 
 # Plot basin runoff (individual plot for each basin specified earlier, including all the RCP and GCAM combinations).
@@ -118,7 +118,7 @@ y_ax_lbl <- expression(Annual~Runoff~(km^3))
 input <- df_2_all_runs_basin
 roll <- 0
 start_yr <- 2010
-end_yr <- 2100
+end_yr <- 2050  # 2100
 var_names <- c('Basin_runoff_km3peryear')
 region_list <- water_basins_plot
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr,
@@ -138,7 +138,7 @@ region_single_plot(var_names, region_list, input, figures_basepath, start_yr, en
 # Create faceted plot across GCMs and RCPs for Basin runoff
 roll <- 0
 start_yr <- 2010
-end_yr <- 2100
+end_yr <- 2050  # 2100
 start_yr_hist <- 1970
 end_yr_hist <- 2009
 xanthos_var_names <- c('Basin_runoff_km3peryear')
@@ -169,10 +169,10 @@ for(var_1 in xanthos_var_names){
 # Plot basin runoff (individual plot for each basin specified earlier, where all the GCM and RCP combinations are
 # combined on the same plot
 y_ax_lbl <- expression(Annual~Runoff~(km^3))
-input <- df_2_all_runs_basin %>% filter(year>=2009, year<=2100)
+input <- df_2_all_runs_basin %>% filter(year>=2009, year<=2050)
 roll <- 0
 start_yr <- 1970
-end_yr <- 2100
+end_yr <- 2050
 var_names <- c('Basin_runoff_km3peryear')
 region_list <- water_basins_plot
 region_single_plot(xanthos_var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
@@ -181,7 +181,7 @@ region_single_plot(xanthos_var_names, region_list, input, figures_basepath, star
 # Plot facet of values smoothed separately
 start_yr <- 2010
 start_yr_mod <- 2010
-end_yr <- 2100
+end_yr <- 2050
 start_yr_hist <- 1970
 end_yr_hist <- 2010
 end_yr_hist_mod <- 2010
@@ -189,14 +189,14 @@ color_palette <- c('gcm_colors')
 model <- c('pm_abcd_mrtm')
 xanthos_var_names <- c('Basin_runoff_km3peryear')
 # Add columns that plotting module expects to find
-runoff_gcm_all_GCAM <- runoff_gcm_all_GCAM %>% mutate(FillPalette = color_palette, 
+runoff_gcm_all_GCAM <- runoff_gcm_all_GCAM %>% mutate(FillPalette = color_palette,
                                                                 var=xanthos_var_names, mod=model)
-runoff_gcm_all_GCAM_3 <- runoff_gcm_all_GCAM_3 %>% mutate(FillPalette = color_palette, 
+runoff_gcm_all_GCAM_3 <- runoff_gcm_all_GCAM_3 %>% mutate(FillPalette = color_palette,
                                                       var=xanthos_var_names, mod=model)
 # Break into a historical portion and a future portion, so they can be plotted separately
-runoff_gcm_all_GCAM_hist <- runoff_gcm_all_GCAM %>% filter(year>=start_yr_hist, year<=end_yr_hist_mod) %>% 
+runoff_gcm_all_GCAM_hist <- runoff_gcm_all_GCAM %>% filter(year>=start_yr_hist, year<=end_yr_hist_mod) %>%
   mutate(rcp='historical mean', gcm='historical mean')
-runoff_gcm_all_GCAM_fut <- runoff_gcm_all_GCAM_3 %>% filter(year>=start_yr_mod, year<=end_yr) 
+runoff_gcm_all_GCAM_fut <- runoff_gcm_all_GCAM_3 %>% filter(year>=start_yr_mod, year<=end_yr)
 # Produce faceted plot
 roll <- 0
 filter_list_2 <- list("Basin_runoff_km3peryear" = water_basins_plot)
@@ -212,29 +212,31 @@ for(var_1 in xanthos_var_names){
 
 # Plot all of above lines that appear in facet, but all on the same plot
 y_ax_lbl <- expression(Annual~Runoff~(km^3))
-#input <- runoff_gcm_all_GCAM_fut %>% filter(year>=2010, year<=2100) %>% mutate(smoothedY=clim_imp_val)
-input <- df_2_all_runs_basin %>% filter(year>=2010, year<=2100) %>% mutate(smoothedY=clim_imp_val)
-runoff_gcm_all_GCAM_hist <- df_2_all_runs_basin %>% filter(year>=start_yr_hist, year<=end_yr_hist_mod) %>% 
+#input <- runoff_gcm_all_GCAM_fut %>% filter(year>=2010, year<=2050) %>% mutate(smoothedY=clim_imp_val)
+input <- df_2_all_runs_basin %>% filter(year>=2010, year<=2050) %>% mutate(smoothedY=clim_imp_val)
+runoff_gcm_all_GCAM_hist <- df_2_all_runs_basin %>% filter(year>=start_yr_hist, year<=end_yr_hist_mod) %>%
   mutate(rcp='historical mean', gcm='historical mean') %>% mutate(smoothedY=mean_hist)
 roll <- 2
 start_yr <- 2010
-end_yr <- 2100
+end_yr <- 2050
 start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('Basin_runoff_km3peryear')
 region_list <- water_basins_plot
+gcm_list <- 'GFDL-ESM2M'
+rcp_list <- c('rcp8p5', 'rcp2p6')
 region_single_plot(xanthos_var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=runoff_gcm_all_GCAM_hist,
-                   all_same_color = 0, titles = 'Yes', legend_on=F)
+                   all_same_color = 0, titles = 'Yes', legend_on=F, gcm_list=gcm_list, rcp_list=rcp_list)
 
 # Plot percentage reduction in smoothed runoff compared with 2010
 y_ax_lbl <- expression(atop(Change~('%')~'in'~runoff,
                             ~from~2010))
-input <- df_2_all_runs_basin %>% filter(year>=2010, year<=2100)
+input <- df_2_all_runs_basin %>% filter(year>=2010, year<=2050)
 input <- input %>% mutate(smoothedY=clim_imp_perc)
 roll <- 2
 start_yr <- 2010
-end_yr <- 2100
+end_yr <- 2050
 start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('Basin_runoff_km3peryear')
@@ -242,16 +244,18 @@ region_list <- water_basins_plot
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_all_runs_basin_hist,
                    all_same_color = 0, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
-                   xmin=2010, xmax=2100)
+                   xmin=2010, xmax=2050)
 
 # Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml
 variable <- 'runoff'
 level2outdir <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/water_avail'
 renewrsc_max_gcam <- paste0(extras_dir, '/', "L201.RenewRsrcCurves_calib_watergap.csv")
-read_csv(renewrsc_max_gcam, skip = 4) %>% 
+read_csv(renewrsc_max_gcam, skip = 4) %>%
   select(region, renewresource) %>% unique() -> region_basin
 df_2_all_runs_basin <- df_2_all_runs_basin
-write_csv_file(df_2_all_runs_basin, gcam_years, gcm_names, rcp_names, level2outdir, variable, region_basin=region_basin)
+gcam_xanthos_basin_mapping <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/gcam_xanthos_basin_mapping.csv'
+write_csv_file(df_2_all_runs_basin, gcam_years, gcm_names, rcp_names, level2outdir, variable, region_basin=region_basin,
+               gcam_xanthos_basin_mapping=gcam_xanthos_basin_mapping)
 
 # Convert csv files to gcam-ready xml files
 var <- "GrdRenewRsrcMax" #  "AgProdChange"

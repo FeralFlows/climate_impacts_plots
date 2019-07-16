@@ -112,7 +112,7 @@ for (reg in country_list_full){
 df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(clim_imp_perc = 100*(smoothedY-mean_2010)/mean_2010) %>% select(-mean_2010)
 
 #
-df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(clim_imp_val = reference+clim_imp_perc/100) %>% 
+df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(clim_imp_val = reference*(1+clim_imp_perc/100)) %>% 
   mutate(clim_imp_val=if_else(clim_imp_val<0,0,clim_imp_val))
 
 # adjust smoothedY and rolling_mean by delta
@@ -126,7 +126,7 @@ if(delta_correction==1){
 # Create faceted plot across GCMs and RCPs for country hydropower production
 roll <- 0
 start_yr <- 2010 # 2010
-end_yr <- 2100 # 2100
+end_yr <- 2050 # 2100
 start_yr_hist <- 1970
 end_yr_hist <- 2009
 xanthos_var_names <- c('actual_hydro_by_gcam_region_EJperyr')
@@ -180,26 +180,26 @@ region_single_plot(var_names, region_list, input, figures_basepath, start_yr, en
 # Plot country hydropower where all the GCM and RCP combinations are
 # combined on the same plot
 y_ax_lbl <- expression(Annual~Hydropower~(TWh))
-input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2100) %>% mutate(smoothedY=clim_imp_val)
+input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2050) %>% mutate(smoothedY=clim_imp_val)
 roll <- 2
 start_yr <- 2010
-end_yr <- 2100
+end_yr <- 2050
 start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list_plot
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
-                   all_same_color = 0, titles = 'Yes', legend_on=F, xmin=2010, xmax=2100)
+                   all_same_color = 0, titles = 'Yes', legend_on=F, xmin=2010, xmax=2050, plot_reference=TRUE)
 
 # Plot percentage reduction in smoothed hydropower production compared with 2010
 y_ax_lbl <- expression(atop(Change~('%')~'in'~hydropower,
                        ~generation~from~2010))
-input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2100)
+input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2050)
 input <- input %>% mutate(smoothedY=clim_imp_perc)
 roll <- 2
 start_yr <- 2010
-end_yr <- 2100
+end_yr <- 2050
 start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
@@ -207,7 +207,7 @@ region_list <- country_list_plot
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
                    all_same_color = 0, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
-                   xmin=2010, xmax=2100)
+                   xmin=2010, xmax=2050)
 
 # Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml
 variable <- 'hydro'
