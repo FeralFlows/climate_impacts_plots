@@ -125,7 +125,7 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   }
   
   if(all_same_color==1){
-    color_var = 'steelblue4'
+    color_var = 'grey70'
   }else{
     color_var = NULL    
   }
@@ -135,16 +135,14 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
       filtered_df <- plot_df_orig %>% filter(rcp==rcp1, gcm==gcm1)
       if(rolling==1){
         if(all_same_color==1){ 
-          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = rolling_mean, 
-                                                                                             colour=gcm))
+          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = rolling_mean))
         }else{
           p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = rolling_mean, 
                                                                                           colour=gcm))          
         }
       }else if(rolling==2){
         if(all_same_color==1){ 
-          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = smoothedY, 
-                                                                                             colour=gcm))
+          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = smoothedY))
         }else{
           p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = smoothedY,
                                                                                           colour=gcm))          
@@ -152,8 +150,7 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
 
       }else{
         if(all_same_color==1){ 
-          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = value, 
-                                                                                             colour=gcm))
+          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = value))
         }else{
           p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = value, colour=gcm))          
         }
@@ -164,14 +161,14 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   
   # Plot reference scenario
   if(!is.null(plot_reference)){
-    p <- p + geom_line(size=0.5, linetype=2, color = 'red', data=filtered_df, mapping = aes(x = year, y = reference))
+    p <- p + geom_line(size=0.5, linetype=1, color = 'black', data=filtered_df, mapping = aes(x = year, y = reference))
   }
       
   # SO far, only adding this colored gcm/rcp plots for smoothedY
   # Plot select subset of gcms. Maximum of two lines, or will generate error
   if(rolling==2){
     ctr <- 0
-    color_list <- c('#fc9272', '#de2d26')
+    color_list <- c('dodgerblue3', '#fc9272')  #  #de2d26
     if(!is.null(gcm_list)){
       for(model in gcm_list){
         for(forc in rcp_list){
@@ -182,8 +179,8 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
           plot_df_orig_2 <- plot_df_orig %>% filter(gcm == model, rcp==forc)  # , rcp == c('rcp2p6')
           plot_df_orig_2$gcm <- as.character(plot_df_orig_2$gcm)
           plot_df_orig_2$rcp <- as.character(plot_df_orig_2$rcp)
-          p <- p + geom_line(size=0.5, linetype=2, color = color_list[ctr], 
-                             data=plot_df_orig_2, mapping = aes(x = year, y = smoothedY))
+          p <- p + geom_line(size=0.5, linetype=1, color = color_list[ctr], 
+                             data=plot_df_orig_2, mapping = aes(x = year, y = smoothedY))  # linetype=2
         }
       }
     }
@@ -263,7 +260,7 @@ xanthos_proc <- function(xanthos_var_names, xanthos_config_names, gcm_names, rcp
     for(mod in xanthos_config_names){
       for(gcm in gcm_names){
         for(rcp in rcp_names){
-          run_name <- paste0(mod, "_", gcm, "_", rcp, "_", time_scale)
+          run_name <- paste0(mod, "_", gcm, "_", rcp)  # , "_", time_scale
           if (stored_in_dir==1){
             xanthos_dir <- paste0(results_basepath, '/', run_name)
           }else{
@@ -356,7 +353,7 @@ xanthos_hist_proc <- function(xanthos_var_names, xanthos_config_names, df_all_ru
 # imports xanthos outputs and reorganizes the data and sets new column values (e.g., rcp and gcm)
 agmip_proc <- function(agmip_var_names, agmip_config_names, gcm_names, rcp_names, results_basepath,
                          filter_list, water_basin_abbrevc = NULL, country_grid_id_filepath=NULL, country_names_id=NULL,
-                       filter_list_2=NULL){
+                       filter_list_2=NULL, gcm_conversion=NULL){
   df_all_runs <- data.frame(matrix(ncol = 14, nrow = 0))
   colnames(df_all_runs) <- c('region', 'basin', 'year', 'value', 'mod', 'var', 'gcm', 'rcp', 'ssp', 'FillPalette')
   for(var in agmip_var_names){
@@ -399,7 +396,7 @@ agmip_proc <- function(agmip_var_names, agmip_config_names, gcm_names, rcp_names
               }
               input['mod'] <- mod
               input['var'] <- var
-              input['gcm'] <- gcm
+              input['gcm'] <- gcm_conversion[gcm]
               input['rcp'] <- rcp
               input['ssp'] <- ssp
               input['FillPalette'] <- c('gcm_colors')
@@ -412,6 +409,38 @@ agmip_proc <- function(agmip_var_names, agmip_config_names, gcm_names, rcp_names
   }
   return(list("output" = df_all_runs))
 }
+
+
+yield_proc <- function(agmip_var_names, yield_2010, filter_list, water_basin_abbrevc = NULL, 
+                       country_names_id=NULL, filter_list_2=NULL){
+
+  input <- read_csv(yield_2010) %>% filter(region %in% filter_list) %>%
+    rename(crop = AgSupplySector) %>% rename(basin=AgSupplySubsector)
+  
+  if(agmip_var_names=='crop_yield'){
+    # Just pull in historical values, which don't require a year
+    input <- input %>% select(-year)
+  }
+  input$basin <- sapply(seq_along(input$crop), function(x) gsub(input$crop[x], rep("", nrow(input)), input$basin[x]))  # remove crop from basin category
+  input <- input %>% mutate(grass = "grass")
+  input <- input %>% mutate(tree = "tree")
+  input$basin <- sapply(seq_along(input$grass), function(x) gsub(input$grass[x], rep("", nrow(input)), input$basin[x]))  # remove grass
+  input$basin <- sapply(seq_along(input$tree), function(x) gsub(input$tree[x], rep("", nrow(input)), input$basin[x]))  # remove tree
+  input$basin <- gsub('_', "", input$basin)  # remove underscore
+  input$rfd <- grepl("RFD", input$AgProductionTechnology)
+  input$irr <- grepl("IRR", input$AgProductionTechnology)
+  input$hi <- grepl("hi", input$AgProductionTechnology)
+  input$lo <- grepl("lo", input$AgProductionTechnology)
+  input_temp1 <- input %>% filter(irr == T, hi == T)
+  input_temp2 <- input %>% filter(rfd == T, hi == T)
+  input <- rbind(input_temp1, input_temp2) %>% select(-hi, -lo, -grass, -tree)
+  for (bas in filter_list_2){
+    input$basin <- gsub(bas, water_basin_abbrevc[bas], input$basin)  # remove crop from basin category
+  }
+  return(list("output" = input))
+}
+
+
 
 # Compute rolling mean
 roll_mean <- function(df_all_runs, xanthos_var_names, xanthos_config_names, gcm_names_incl_hist, rcp_names_incl_hist,
@@ -447,18 +476,25 @@ roll_mean <- function(df_all_runs, xanthos_var_names, xanthos_config_names, gcm_
 region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figures_basepath, start_yr, end_yr,
                                gcm_names, rcp_names, roll, y_ax_lbl, trendline=1, combined_lines=0, plot_df_hist=NULL,
                                all_same_color = 1, titles=NULL, legend_on=TRUE, plot_var='', plot_hist=TRUE, xmin=NULL,
-                               xmax=NULL, plot_reference=NULL, fig_name_append=NULL, gcm_list=NULL, rcp_list=NULL){
+                               xmax=NULL, plot_reference=NULL, fig_name_append=NULL, gcm_list=NULL, rcp_list=NULL, 
+                               ymax=NULL, ymin=NULL){
   for(var_1 in xanthos_var_names){
     for(reg in region_list){
-      if(roll==1){
-        ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$rolling_mean)
-        ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$rolling_mean)
-      }else if(roll==2){
-        ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$smoothedY)
-        ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$smoothedY)
+      if(is.null(ymax) & is.null(ymin)){
+        if(roll==1){
+          ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$rolling_mean)
+          ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$rolling_mean)
+        }else if(roll==2){
+          ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$smoothedY)
+          ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$smoothedY)
+        }else{
+          ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$value)
+          ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$value)
+        }
       }else{
-        ymax_across_gcms <- max((df_all_runs %>% filter(name==reg, var==var_1))$value)
-        ymin_across_gcms <- min((df_all_runs %>% filter(name==reg, var==var_1))$value)
+        # User has specified ymin and ymax
+        ymax_across_gcms <- ymax
+        ymin_across_gcms <- ymin
       }
       if(is.null(titles)){
         title=NULL
@@ -470,11 +506,13 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
           fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", gcm1, "_", plot_var, "_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
           plot_df <- df_all_runs %>%
             filter(name==reg, gcm==gcm1, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
-          line_plot(plot_df, fig_name, rolling=roll, y_lbl=y_ax_lbl, y_max=ymax_across_gcms, y_min=ymin_across_gcms,
-                    trendline=trendline, title=reg, legend_on=legend_on, x_min=xmin, x_max=xmax)
+          if(nrow(plot_df)>0){
+            line_plot(plot_df, fig_name, rolling=roll, y_lbl=y_ax_lbl, y_max=ymax_across_gcms, y_min=ymin_across_gcms,
+                      trendline=trendline, title=title, legend_on=legend_on, x_min=xmin, x_max=xmax)
+          }
         }
       }else{
-        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", plot_var, "_", fig_name_append, '_', "_combined_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
+        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", plot_var, "_", fig_name_append, "_combined", if(roll==1){'_rolling_mean'}else if(roll==2){'_loess'}else{''}, '.png')
         plot_df <- df_all_runs %>%
           filter(name==reg, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
         if(plot_hist==TRUE){
@@ -482,11 +520,14 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
         }else{
           plot_df_hist_2 <- NULL
         }
-        line_plot_hist_proj(plot_df, plot_df_hist_2, fig_name, gcm_names, rcp_names, rolling=roll, y_lbl=y_ax_lbl,
-                            y_max=ymax_across_gcms, y_min=ymin_across_gcms, x_min=xmin, x_max=xmax,
-                            trendline=trendline, all_same_color=all_same_color, title=reg, 
-                            legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist, plot_reference=plot_reference, 
-                            gcm_list=gcm_list, rcp_list=rcp_list)
+        print(reg)
+        if(nrow(plot_df)>0){
+          line_plot_hist_proj(plot_df, plot_df_hist_2, fig_name, gcm_names, rcp_names, rolling=roll, y_lbl=y_ax_lbl,
+                              y_max=ymax_across_gcms, y_min=ymin_across_gcms, x_min=xmin, x_max=xmax,
+                              trendline=trendline, all_same_color=all_same_color, title=title, 
+                              legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist, plot_reference=plot_reference, 
+                              gcm_list=gcm_list, rcp_list=rcp_list)
+        }
       }
     }
   }
@@ -962,7 +1003,13 @@ adjust_gcm_mean_country <- function(base_dir, extras_dir, level2_out_dir, countr
 
 write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable, 
                            basin_ids=NULL, region_basin=FALSE, renewrsc_max_gcam=FALSE, level2_out_dir=FALSE,
-                           L201.GrdRenewRsrcMax_runoff=FALSE, gcam_xanthos_basin_mapping=NULL){
+                           L201.GrdRenewRsrcMax_runoff=FALSE, gcam_xanthos_basin_mapping=NULL, name_exclude_list=NULL){
+  if(!is.null(gcam_xanthos_basin_mapping)){
+    mapping_file <- read.csv(gcam_xanthos_basin_mapping)
+  }
+  iso_GCAM_reg_ID <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/iso_GCAM_regID.csv'
+  GCAM_basin_country <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/GCAMBasin_country.csv'
+  gcam_region_names <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/GCAM_region_names.csv'
   # Process data
   for(clim_mod in gcms){ 
     for (forc in rcps){
@@ -996,18 +1043,24 @@ write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable
           rename(year.fillout=year) %>% 
           mutate(sub.renewable.resource='runoff')
         if(!is.null(gcam_xanthos_basin_mapping)){
-          mapping_file <- read.csv(gcam_xanthos_basin_mapping)
           export_df <- export_df %>% 
             left_join(mapping_file, by=c('name')) %>% 
             select(-name) %>%
             rename(name = GCAM.basin.name)
         }
-        export_df <- export_df %>%   
-          mutate(renewresource = paste0(name, "-water withdrawals")) %>%
-          left_join(region_basin, by=c('renewresource')) %>% print() %>% 
+        f1 <- read.csv(iso_GCAM_reg_ID, skip=6)
+        f2 <- read.csv(GCAM_basin_country)
+        f3 <- f1 %>% left_join(f2, by="country") %>% select(-iso, -region_GCAM3)
+        f4 <- read.csv(gcam_region_names, skip=6)
+        f5 <- f3 %>% left_join(f4, by=c('GCAM_region_ID')) %>% select(-country, GCAM_region_ID)
+        export_df <- export_df %>%
+          left_join(f5, by=c('name')) %>% 
+          mutate(renewresource = paste0(name, "_water withdrawals")) %>%
+#          left_join(region_basin, by=c('renewresource')) %>%
           rename(maxSubResource=clim_imp_val) %>%
-          mutate(renewresource=str_replace_all(renewresource, '-water withdrawals', '_water withdrawals')) %>% 
-          filter(region!="NA") %>% 
+#          mutate(renewresource=str_replace_all(renewresource, '-water withdrawals', '_water withdrawals')) %>% 
+          filter(region!="NA") %>%
+          filter(!name %in% name_exclude_list) %>% 
           select(region, renewresource, sub.renewable.resource, year.fillout, maxSubResource)
         
         renewrsc_max_gcam <- paste0(extras_dir, '/', "L201.RenewRsrcCurves_calib_watergap.csv")
