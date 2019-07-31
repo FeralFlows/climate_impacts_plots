@@ -25,7 +25,7 @@ gcm_colors <- c("NorESM1-M" = "#736F6E",
                 "watch+wfdei" = 'black')
 
 figures_basepath <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/figures/hydro'
-results_basepath <- 'C:/Users/twild/all_git_repositories/Xanthos_final_4/example/output'
+results_basepath <- 'C:/Users/twild/all_git_repositories/Xanthos_python3/xanthos/example/output'
 csv_basepath <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/hydro'
 xanthos_config_names <- c('clim_impacts')
 gcm_names <- c('NorESM1-M', 'MIROC-ESM-CHEM', 'IPSL-CM5A-LR', 'HadGEM2-ES', 'GFDL-ESM2M')
@@ -123,6 +123,62 @@ if(delta_correction==1){
   df_2_all_runs_hydro$smoothedY <- df_2_all_runs_hydro$smoothedYDelta
 }
 
+
+# Plot country hydropower where all the GCM and RCP combinations are
+# combined on the same plot
+y_ax_lbl <- expression(Annual~Hydropower~(TWh))
+input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2050) %>% mutate(smoothedY=clim_imp_val)
+roll <- 2
+start_yr <- 2010
+end_yr <- 2050
+start_yr_hist <- 1970
+end_yr_hist <- 2010
+var_names <- c('actual_hydro_by_gcam_region_EJperyr')
+region_list <- country_list_plot
+gcm_list <- 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
+rcp_list <- c('rcp6p0', 'rcp8p5')
+region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
+                   roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
+                   all_same_color = 1, titles = 'Yes', legend_on=F, xmin=2010, xmax=2050, plot_reference=TRUE,
+                   gcm_list=gcm_list, rcp_list=rcp_list)
+
+# Plot percentage reduction in smoothed hydropower production compared with 2010
+y_ax_lbl <- expression(atop(Change~('%')~'in'~hydropower,
+                       ~generation~from~2010))
+input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2050)
+input <- input %>% mutate(smoothedY=clim_imp_perc)
+roll <- 2
+start_yr <- 2010
+end_yr <- 2050
+start_yr_hist <- 1970
+end_yr_hist <- 2010
+var_names <- c('actual_hydro_by_gcam_region_EJperyr')
+region_list <- country_list_plot
+gcm_list <- 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
+rcp_list <- c('rcp6p0', 'rcp8p5')
+region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
+                   roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
+                   all_same_color = 1, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
+                   xmin=2010, xmax=2050, gcm_list=gcm_list, rcp_list=rcp_list)
+
+# Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml
+variable <- 'hydro'
+write_csv_file(df_2_all_runs_hydro, gcam_years, gcm_names, rcp_names, csv_basepath, variable)
+
+# Convert csv files to gcam-ready xml files
+var <- "StubTechFixOut" #  "AgProdChange"
+csvpath <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/hydro' # "data/scenario_agprodchange_gcam513_annual"
+xmlpath <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/hydro/xml'  # "data/scenario_agprodchange_gcam513_annual/xml"
+csv2xml(csvpath, xmlpath, var)
+
+
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+# PLOTS WE ARE NOT USING ANY LONGER
+
 # Create faceted plot across GCMs and RCPs for country hydropower production
 roll <- 0
 start_yr <- 2010 # 2010
@@ -177,44 +233,3 @@ region_list <- country_list_plot
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr,
                    gcm_names, rcp_names, roll, y_ax_lbl, trendline=0)
 
-# Plot country hydropower where all the GCM and RCP combinations are
-# combined on the same plot
-y_ax_lbl <- expression(Annual~Hydropower~(TWh))
-input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2050) %>% mutate(smoothedY=clim_imp_val)
-roll <- 2
-start_yr <- 2010
-end_yr <- 2050
-start_yr_hist <- 1970
-end_yr_hist <- 2010
-var_names <- c('actual_hydro_by_gcam_region_EJperyr')
-region_list <- country_list_plot
-region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
-                   roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
-                   all_same_color = 0, titles = 'Yes', legend_on=F, xmin=2010, xmax=2050, plot_reference=TRUE)
-
-# Plot percentage reduction in smoothed hydropower production compared with 2010
-y_ax_lbl <- expression(atop(Change~('%')~'in'~hydropower,
-                       ~generation~from~2010))
-input <- df_2_all_runs_hydro %>% filter(year>=2010, year<=2050)
-input <- input %>% mutate(smoothedY=clim_imp_perc)
-roll <- 2
-start_yr <- 2010
-end_yr <- 2050
-start_yr_hist <- 1970
-end_yr_hist <- 2010
-var_names <- c('actual_hydro_by_gcam_region_EJperyr')
-region_list <- country_list_plot
-region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
-                   roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
-                   all_same_color = 0, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
-                   xmin=2010, xmax=2050)
-
-# Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml
-variable <- 'hydro'
-write_csv_file(df_2_all_runs_hydro, gcam_years, gcm_names, rcp_names, csv_basepath, variable)
-
-# Convert csv files to gcam-ready xml files
-var <- "StubTechFixOut" #  "AgProdChange"
-csvpath <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/hydro' # "data/scenario_agprodchange_gcam513_annual"
-xmlpath <- 'C:/Users/twild/all_git_repositories/idb_results/impacts/hydro/xml'  # "data/scenario_agprodchange_gcam513_annual/xml"
-csv2xml(csvpath, xmlpath, var)
