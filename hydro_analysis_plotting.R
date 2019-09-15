@@ -136,10 +136,10 @@ end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list_plot
 gcm_list <- 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
-rcp_list <- c('rcp6p0', 'rcp8p5')
+rcp_list <- c('rcp2p6', 'rcp8p5')
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
-                   all_same_color = 1, titles = 'Yes', legend_on=F, xmin=2010, xmax=2050, plot_reference=TRUE,
+                   all_same_color = 1, titles = 'Yes', legend_on=TRUE, xmin=2010, xmax=2050, plot_reference=TRUE,
                    gcm_list=gcm_list, rcp_list=rcp_list)
 
 # Plot percentage reduction in smoothed hydropower production compared with 2010
@@ -155,10 +155,10 @@ end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list_plot
 gcm_list <- 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
-rcp_list <- c('rcp6p0', 'rcp8p5')
+rcp_list <- c('rcp2p6', 'rcp8p5')
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
-                   all_same_color = 1, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
+                   all_same_color = 1, titles = 'Yes', legend_on=TRUE, plot_hist=FALSE, plot_var='perc_red',
                    xmin=2010, xmax=2050, gcm_list=gcm_list, rcp_list=rcp_list)
 
 # Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml
