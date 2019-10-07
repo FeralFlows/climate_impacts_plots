@@ -125,7 +125,7 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   }
   
   if(all_same_color==1){
-    color_var = 'grey70'
+    color_var = 'grey70' # "#153E7E"
   }else{
     color_var = NULL    
   }
@@ -477,7 +477,7 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
                                gcm_names, rcp_names, roll, y_ax_lbl, trendline=1, combined_lines=0, plot_df_hist=NULL,
                                all_same_color = 1, titles=NULL, legend_on=TRUE, plot_var='', plot_hist=TRUE, xmin=NULL,
                                xmax=NULL, plot_reference=NULL, fig_name_append=NULL, gcm_list=NULL, rcp_list=NULL, 
-                               ymax=NULL, ymin=NULL){
+                               ymax=NULL, ymin=NULL, fig_type='.png'){
   for(var_1 in xanthos_var_names){
     for(reg in region_list){
       if(is.null(ymax) & is.null(ymin)){
@@ -503,7 +503,7 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
       }
       if(combined_lines == 0){
         for(gcm1 in gcm_names){
-          fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", gcm1, "_", plot_var, "_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
+          fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", gcm1, "_", plot_var, "_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, fig_type)
           plot_df <- df_all_runs %>%
             filter(name==reg, gcm==gcm1, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
           if(nrow(plot_df)>0){
@@ -512,7 +512,7 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
           }
         }
       }else{
-        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", plot_var, "_", fig_name_append, "_combined", if(roll==1){'_rolling_mean'}else if(roll==2){'_loess'}else{''}, '.png')
+        fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", plot_var, "_", fig_name_append, "_combined", if(roll==1){'_rolling_mean'}else if(roll==2){'_loess'}else{''}, fig_type)
         plot_df <- df_all_runs %>%
           filter(name==reg, year>=start_yr, year<=end_yr, gcm %in% gcm_names, rcp %in% rcp_names, var==var_1)
         if(plot_hist==TRUE){
@@ -549,7 +549,7 @@ region_single_plot_ag <- function(xanthos_var_names, region_list, basin_list, cr
             }
             for(gcm1 in gcm_names){
               fig_name <- paste0(figures_basepath, '/', var_1, "_", reg, "_", bas, "_", crp, "_", water_type, "_", gcm1,
-                                 "_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, '.png')
+                                 "_", if(roll==1){'rolling_mean'}else if(roll==2){'loess'}else{''}, fig_type)
               if(water_type=='irr'){
                 plot_df <- df_all_runs %>%
                   filter(region==reg, basin==bas, crop==crp, gcm==gcm1, year>=start_yr, year<=end_yr, gcm %in% gcm_names,
