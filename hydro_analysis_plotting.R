@@ -36,7 +36,7 @@ xanthos_var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 time_scale <- '1950_2099'
 country_list_plot <- c('Colombia', 'Argentina', 'Uruguay')
 run_name <- c('clim_impacts')
-gcam_years <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075, 
+gcam_years <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075,
                 2080, 2085, 2090, 2095, 2100)
 stored_in_dir <- 1  # = 1 if dragged whole xanthos folder off pic; 0 if just dragged file down into results dir on comp
 # Add historical values to dataframe
@@ -46,8 +46,8 @@ delta_correction <- 0
 # Process GCAM hydro values
 # Deal first with all data
 gcam_ref_hydro_ALL_basepath <- '//essi12.umd.edu/documents/twild/Documents/idb_colombia_ref/reference/Electricity/reference_gcam_hydro_all_regions.csv'
-gcam_ref_hydro_ALL_traject <- read.csv(gcam_ref_hydro_ALL_basepath) %>% 
-  gather("year", "value", -scenario, -region, -subsector, -Units) %>% mutate(year=str_replace(year, "X", '')) %>% 
+gcam_ref_hydro_ALL_traject <- read.csv(gcam_ref_hydro_ALL_basepath) %>%
+  gather("year", "value", -scenario, -region, -subsector, -Units) %>% mutate(year=str_replace(year, "X", '')) %>%
   select(-scenario, -Units, -subsector) %>% rename(reference=value, period=year)
 gcam_ref_hydro_ALL_traject$period <- as.numeric(gcam_ref_hydro_ALL_traject$period)
 country_list_full <- as.character(unique(gcam_ref_hydro_ALL_traject$region))
@@ -98,7 +98,7 @@ df_2_all_runs_hydro_hist$year <- as.numeric(df_2_all_runs_hydro_hist$year)
 df_2_all_runs_hydro <- df_2_all_runs_hydro %>% left_join(gcam_ref_hydro_traject_final, by=c('name', 'year'))
 df_2_all_runs_hydro$delta[is.na(df_2_all_runs_hydro$delta)] <- 1  # Set NA values in delta column to 1
 
-# Compute the mean value, store it for every gcm/rcp combo. Also compute the percent change in every year relative to 
+# Compute the mean value, store it for every gcm/rcp combo. Also compute the percent change in every year relative to
 # that mean, and store that
 df_2_all_runs_hydro['mean_2010'] <- 0 # add mean_2010 column
 for (reg in country_list_full){
@@ -112,11 +112,11 @@ for (reg in country_list_full){
 df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(clim_imp_perc = 100*(smoothedY-mean_2010)/mean_2010) %>% select(-mean_2010)
 
 #
-df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(clim_imp_val = reference*(1+clim_imp_perc/100)) %>% 
+df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(clim_imp_val = reference*(1+clim_imp_perc/100)) %>%
   mutate(clim_imp_val=if_else(clim_imp_val<0,0,clim_imp_val))
 
 # adjust smoothedY and rolling_mean by delta
-df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(RollingMeanDelta=rolling_mean*delta) %>% 
+df_2_all_runs_hydro <- df_2_all_runs_hydro %>% mutate(RollingMeanDelta=rolling_mean*delta) %>%
   mutate(smoothedYDelta=smoothedY*delta)
 # Adjust smoothedY so it does or does not reflect a delta correction, depending on user preferences
 if(delta_correction==1){
@@ -135,12 +135,12 @@ start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list_plot
-gcm_list <- 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
-rcp_list <- c('rcp2p6', 'rcp8p5')
+gcm_list <- 'HadGEM2-ES' # 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
+rcp_list <- c('rcp8p5')  # 'rcp2p6'
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
                    all_same_color = 1, titles = 'Yes', legend_on=TRUE, xmin=2010, xmax=2050, plot_reference=TRUE,
-                   gcm_list=gcm_list, rcp_list=rcp_list)
+                   gcm_list=gcm_list, rcp_list=rcp_list, fig_type='.pdf')
 
 # Plot percentage reduction in smoothed hydropower production compared with 2010
 y_ax_lbl <- expression(atop(Change~('%')~'in'~hydropower,
@@ -154,12 +154,12 @@ start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list_plot
-gcm_list <- 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
-rcp_list <- c('rcp2p6', 'rcp8p5')
+gcm_list <- 'HadGEM2-ES' # 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
+rcp_list <- c('rcp8p5')  # 'rcp2p6'
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
                    all_same_color = 1, titles = 'Yes', legend_on=TRUE, plot_hist=FALSE, plot_var='perc_red',
-                   xmin=2010, xmax=2050, gcm_list=gcm_list, rcp_list=rcp_list)
+                   xmin=2010, xmax=2050, gcm_list=gcm_list, rcp_list=rcp_list, fig_type='.pdf')
 
 # Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml
 variable <- 'hydro'

@@ -251,7 +251,7 @@ rcp_list <- c('rcp2p6', 'rcp8p5')
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=hist_temp,
                    all_same_color = 1, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
-                   xmin=2010, xmax=2050, gcm_list=gcm_list, rcp_list=rcp_list)
+                   xmin=2010, xmax=2050, gcm_list=gcm_list, rcp_list=rcp_list, fig_type='.pdf')
 
 # Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml
 variable <- 'runoff'
