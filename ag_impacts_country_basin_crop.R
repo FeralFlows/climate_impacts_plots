@@ -161,7 +161,7 @@ input <- df_2_all_runs_basin %>% mutate(smoothedY=value)
 roll <- 2
 country_list <- c('Colombia', 'Uruguay', 'Argentina')
 region_list <- country_list
-gcm_list <- 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
+gcm_list <- 'GFDL-ESM2M'# 'HadGEM2-ES', 'IPSL-CM5A-LR'
 rcp_list <- c('rcp8p5')  # 'rcp2p6',
 crop_list <- c("Root_Tuber", "Corn", "FiberCrop", "MiscCrop", "OilCrop",  "OtherGrain", "PalmFruit",  "Rice",
                "SugarCrop",  "Wheat",  "biomass", 'FodderGrass', 'FodderHerb')

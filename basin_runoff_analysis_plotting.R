@@ -223,11 +223,12 @@ start_yr <- 2010
 end_yr <- 2050
 var_names <- c('Basin_runoff_km3peryear')
 region_list <- water_basins_plot
-gcm_list <- 'GFDL-ESM2M' # IPSL-CM5A-LR'
-rcp_list <- c('rcp2p6', 'rcp8p5')
+gcm_list <- 'HadGEM2-ES' # 'GFDL-ESM2M' # IPSL-CM5A-LR'
+rcp_list <- c('rcp8p5')  # 'rcp2p6'
 region_single_plot(xanthos_var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=runoff_gcm_all_GCAM_hist,
-                   all_same_color = 1, titles = 'Yes', legend_on=F, gcm_list=gcm_list, rcp_list=rcp_list)
+                   all_same_color = 1, titles = 'No', legend_on=F, gcm_list=gcm_list, rcp_list=rcp_list,
+                   fig_type='.pdf')
 
 # Plot percentage reduction in smoothed runoff compared with 2010
 y_ax_lbl <- expression(Change~('%')~'from'~2010~runoff)
@@ -246,11 +247,11 @@ start_yr_hist <- 1990
 end_yr_hist <- 2010
 var_names <- c('Basin_runoff_km3peryear')
 region_list <- water_basins_plot
-gcm_list <- 'GFDL-ESM2M'  #  'IPSL-CM5A-LR'
-rcp_list <- c('rcp2p6', 'rcp8p5')
+gcm_list <- 'HadGEM2-ES' # 'GFDL-ESM2M' # IPSL-CM5A-LR'
+rcp_list <- c('rcp8p5')  # 'rcp2p6'
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=hist_temp,
-                   all_same_color = 1, titles = 'Yes', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
+                   all_same_color = 1, titles = 'No', legend_on=F, plot_hist=FALSE, plot_var='perc_red',
                    xmin=2010, xmax=2050, gcm_list=gcm_list, rcp_list=rcp_list, fig_type='.pdf')
 
 # Having produced all plots, now save file as csv, in format that will allow it to be converted into gcam-ready xml

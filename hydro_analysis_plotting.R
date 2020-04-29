@@ -135,7 +135,7 @@ start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list_plot
-gcm_list <- 'HadGEM2-ES' # 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
+gcm_list <- 'GFDL-ESM2M'  # 'HadGEM2-ES', 'IPSL-CM5A-LR'
 rcp_list <- c('rcp8p5')  # 'rcp2p6'
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,
@@ -154,7 +154,7 @@ start_yr_hist <- 1970
 end_yr_hist <- 2010
 var_names <- c('actual_hydro_by_gcam_region_EJperyr')
 region_list <- country_list_plot
-gcm_list <- 'HadGEM2-ES' # 'GFDL-ESM2M'  # 'IPSL-CM5A-LR'
+gcm_list <- 'GFDL-ESM2M' #   'HadGEM2-ES', 'IPSL-CM5A-LR'
 rcp_list <- c('rcp8p5')  # 'rcp2p6'
 region_single_plot(var_names, region_list, input, figures_basepath, start_yr, end_yr, gcm_names, rcp_names,
                    roll, y_ax_lbl, trendline=0, combined_lines=1, plot_df_hist=df_2_all_runs_hydro_hist,

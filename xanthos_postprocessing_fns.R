@@ -10,7 +10,7 @@ library(gcamdata)
 #-----------------------------------------------------
 # FUNCTIONS
 
-line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1, 
+line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1,
                       title=TRUE, legend_on=TRUE, x_min=NULL, x_max=NULL){
 
   # ggplot2 Theme
@@ -71,8 +71,8 @@ line_plot <- function(plot_df, fig_name, rolling=0, y_lbl=NULL, x_lbl=NULL, y_ma
 }
 
 line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_names, rolling=0, y_lbl=NULL,
-                                x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE, 
-                                plot_var=NULL, plot_hist=TRUE, x_min=NULL, x_max=NULL, plot_reference=NULL, 
+                                x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE,
+                                plot_var=NULL, plot_hist=TRUE, x_min=NULL, x_max=NULL, plot_reference=NULL,
                                 gcm_list=NULL, rcp_list=NULL){
 
   line_colors<-get(plot_df$FillPalette)
@@ -80,10 +80,10 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   # ggplot2 Theme
   z_theme <<- theme_bw() +
     theme(
-      text =                element_text(family = NULL, face = "plain",colour = "black", size = 8 ,hjust = 0.5, 
+      text =                element_text(family = NULL, face = "plain",colour = "black", size = 10 ,hjust = 0.5,
                                          vjust = 0.5, angle = 0, lineheight = 0.9)
-      , axis.text.x =       element_text(size=6)
-      , axis.text.y =       element_text(size=6)
+      , axis.text.x =       element_text(size=8)
+      , axis.text.y =       element_text(size=8)
       ,axis.title.x =       element_text(vjust = -1, margin=margin(t=1,unit="line"))
       ,axis.title.y =       element_text(angle = 90, vjust = 2, margin=margin(r=1,unit="line"))
       ,legend.key =         element_blank()
@@ -93,6 +93,7 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
       ,strip.background =   element_rect(fill = NA, colour = "black")
       ,plot.margin =        unit(c(1, 1, 1, 1), "lines")
       ,plot.title=          element_text(face="bold", hjust=0.2, vjust = -4, margin = margin(b=20), size=8)
+      #,plot.margin=grid::unit(c(0,0,0,0), "mm")
     )
 
   breakx_minMaster<-5
@@ -106,7 +107,7 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
     plot_df_hist <- plot_df_hist %>% filter(rcp %in% c('historical', 'historical mean'))  # Store historical values in separate DF to be plotted
   }
   #line_colors<-get(plot_df$FillPalette)
-  
+
   # First, add historical data if user wants to plot it
   if (plot_hist==TRUE){
     if(rolling==1){
@@ -123,47 +124,47 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
     # Historical data not going to be plotted. Need to create new ggplot since it wasnt created above for hist plotting.
     p <- ggplot()
   }
-  
+
   if(all_same_color==1){
     color_var = 'grey70' # "#153E7E"
   }else{
-    color_var = NULL    
+    color_var = NULL
   }
-  
+
   for(gcm1 in gcm_names){
     for(rcp1 in rcp_names){
       filtered_df <- plot_df_orig %>% filter(rcp==rcp1, gcm==gcm1)
       if(rolling==1){
-        if(all_same_color==1){ 
+        if(all_same_color==1){
           p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = rolling_mean))
         }else{
-          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = rolling_mean, 
-                                                                                          colour=gcm))          
+          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = rolling_mean,
+                                                                                          colour=gcm))
         }
       }else if(rolling==2){
-        if(all_same_color==1){ 
+        if(all_same_color==1){
           p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = smoothedY))
         }else{
           p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = smoothedY,
-                                                                                          colour=gcm))          
+                                                                                          colour=gcm))
         }
 
       }else{
-        if(all_same_color==1){ 
+        if(all_same_color==1){
           p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = value))
         }else{
-          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = value, colour=gcm))          
+          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = value, colour=gcm))
         }
-      }      
-      
+      }
+
     }
   }
-  
+
   # Plot reference scenario
   if(!is.null(plot_reference)){
     p <- p + geom_line(size=0.5, linetype=1, color = 'black', data=filtered_df, mapping = aes(x = year, y = reference))
   }
-      
+
   # SO far, only adding this colored gcm/rcp plots for smoothedY
   # Plot select subset of gcms. Maximum of two lines, or will generate error
   if(rolling==2){
@@ -179,13 +180,13 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
           plot_df_orig_2 <- plot_df_orig %>% filter(gcm == model, rcp==forc)  # , rcp == c('rcp2p6')
           plot_df_orig_2$gcm <- as.character(plot_df_orig_2$gcm)
           plot_df_orig_2$rcp <- as.character(plot_df_orig_2$rcp)
-          p <- p + geom_line(size=0.5, linetype=1, color = color_list[ctr], 
+          p <- p + geom_line(size=0.5, linetype=1, color = color_list[ctr],
                              data=plot_df_orig_2, mapping = aes(x = year, y = smoothedY))  # linetype=2
         }
       }
     }
-  }  
-  
+  }
+
   p <- p + xlab(x_lbl) + ylab(y_lbl)
   if(!is.null(y_min)){
     p<-p + scale_y_continuous(limits=c(y_min - 0.1*abs(y_min), 1.1*y_max))
@@ -411,12 +412,12 @@ agmip_proc <- function(agmip_var_names, agmip_config_names, gcm_names, rcp_names
 }
 
 
-yield_proc <- function(agmip_var_names, yield_2010, filter_list, water_basin_abbrevc = NULL, 
+yield_proc <- function(agmip_var_names, yield_2010, filter_list, water_basin_abbrevc = NULL,
                        country_names_id=NULL, filter_list_2=NULL){
 
   input <- read_csv(yield_2010) %>% filter(region %in% filter_list) %>%
     rename(crop = AgSupplySector) %>% rename(basin=AgSupplySubsector)
-  
+
   if(agmip_var_names=='crop_yield'){
     # Just pull in historical values, which don't require a year
     input <- input %>% select(-year)
@@ -476,7 +477,7 @@ roll_mean <- function(df_all_runs, xanthos_var_names, xanthos_config_names, gcm_
 region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figures_basepath, start_yr, end_yr,
                                gcm_names, rcp_names, roll, y_ax_lbl, trendline=1, combined_lines=0, plot_df_hist=NULL,
                                all_same_color = 1, titles=NULL, legend_on=TRUE, plot_var='', plot_hist=TRUE, xmin=NULL,
-                               xmax=NULL, plot_reference=NULL, fig_name_append=NULL, gcm_list=NULL, rcp_list=NULL, 
+                               xmax=NULL, plot_reference=NULL, fig_name_append=NULL, gcm_list=NULL, rcp_list=NULL,
                                ymax=NULL, ymin=NULL, fig_type='.png'){
   for(var_1 in xanthos_var_names){
     for(reg in region_list){
@@ -498,8 +499,10 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
       }
       if(is.null(titles)){
         title=NULL
-      }else{
+      }else if (titles %in% c('yes', 'Yes', 'y', 'Y')){
         title=reg
+      }else{
+        title=NULL
       }
       if(combined_lines == 0){
         for(gcm1 in gcm_names){
@@ -524,8 +527,8 @@ region_single_plot <- function(xanthos_var_names, region_list, df_all_runs, figu
         if(nrow(plot_df)>0){
           line_plot_hist_proj(plot_df, plot_df_hist_2, fig_name, gcm_names, rcp_names, rolling=roll, y_lbl=y_ax_lbl,
                               y_max=ymax_across_gcms, y_min=ymin_across_gcms, x_min=xmin, x_max=xmax,
-                              trendline=trendline, all_same_color=all_same_color, title=title, 
-                              legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist, plot_reference=plot_reference, 
+                              trendline=trendline, all_same_color=all_same_color, title=title,
+                              legend_on=legend_on, plot_var=plot_var, plot_hist=plot_hist, plot_reference=plot_reference,
                               gcm_list=gcm_list, rcp_list=rcp_list)
         }
       }
@@ -581,73 +584,73 @@ hydro_perc_change <- function(df_hydro, region_list, gcm_names, rcp_names, start
 }
 
 
-adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, time_scale, stored_in_dir, run_name, 
+adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, time_scale, stored_in_dir, run_name,
                             xanthos_var_names, basins_filter=NULL){
-    
+
   ## Purpose of file is threefold:
-  
-  # 1) Despite the fact that the ISIMIP models have been bias corrected using WATCH data, 
-  # this does not necessarily mean that the mean annual runoff across historical years (1970-2010) in 
+
+  # 1) Despite the fact that the ISIMIP models have been bias corrected using WATCH data,
+  # this does not necessarily mean that the mean annual runoff across historical years (1970-2010) in
   # Xanthos results produced with the GCM data will be the same as the mean of the Xanthos results
   # generated using WATCH data directly. So we are having to do sort of a second bias correction here,
   # to be sure that the gcm values in history (as well as those in the future) get corrected. This is
   # particularly useful if we want to plot historical runoff (xanthos forced with watch) on the same
   # plot as GCM projections, because there is a discontinuity starting in 2010 for some GCMs.
-  
+
   # 2) After performing this correction, the function then smooths the future projections with a LOESS
-  # filter, but importantly does so using the historical data as part of the smoothing set, so that you get a smooth 
+  # filter, but importantly does so using the historical data as part of the smoothing set, so that you get a smooth
   # continuity between historical and future data points. The function then sets historical points
   # equal to the historical mean.
-  
+
   # 3) Finally, the function produces Level 2 GCAM files correctly formatted, and containing maxsubresource
   # values, corresponding to the mean annual values in historical years, but loess-smoothed values
   # in future years. To produce the xml that gcam requires, users can either run these files through
   # the model interface with the appropriate header, or can re-build the data system.
-  
+
   # Authors: Sean Turner, Thomas Wild, Zarrar Khan
-  # Date: April 2019  
-  
+  # Date: April 2019
+
   # Required input files
   gcam_basins <- paste0(extras_dir, '/', "gcam_basin_id.csv")
   renewrsc_max_gcam <- paste0(extras_dir, '/', "L201.RenewRsrcCurves_calib_watergap.csv")
   L201.GrdRenewRsrcMax_runoff <- paste0(extras_dir, '/', "L201.GrdRenewRsrcMax_runoff.csv")
-  
+
   reanalysis_data <- paste0(extras_dir, '/', "runoff_max_wfdei_1970_2010.csv")
   # get basin data for joining
   read_csv(gcam_basins) %>%
     select(basin.id, basin.name) %>% rename(GCAM_basin_name=basin.name, GCAM_basin_ID=basin.id) ->
     basin_ids
-  
-  read_csv(renewrsc_max_gcam, skip = 4) %>% 
+
+  read_csv(renewrsc_max_gcam, skip = 4) %>%
     select(region, renewresource) %>% unique() -> region_basin
-  
+
   # read watch reanalysis data
-  read_csv(reanalysis_data) %>% 
-    gather(year, runoff, -name, -id) %>% 
+  read_csv(reanalysis_data) %>%
+    gather(year, runoff, -name, -id) %>%
     mutate(year = as.integer(year)) -> runoff_wfdei
-  
+
   baseline_years <- 1970:2009
-  
+
   # prepare watch output for GCAM (km3 per year)
-  runoff_wfdei %>% group_by(id) %>% 
-    filter(year %in% baseline_years) %>% 
-    summarise(runoff = mean(runoff)) %>% 
-    mutate(year = 1970) %>% 
-    complete(year = seq(1970, 2100, 5), id) %>% 
-    group_by(id) %>% 
-    tidyr::fill(runoff) %>% ungroup() %>% 
-    arrange(id, year) %>% 
+  runoff_wfdei %>% group_by(id) %>%
+    filter(year %in% baseline_years) %>%
+    summarise(runoff = mean(runoff)) %>%
+    mutate(year = 1970) %>%
+    complete(year = seq(1970, 2100, 5), id) %>%
+    group_by(id) %>%
+    tidyr::fill(runoff) %>% ungroup() %>%
+    arrange(id, year) %>%
     rename(basin.id = id,
-           runoff.max = runoff) %>% 
-    select(basin.id, runoff.max, year) %>% 
-    mutate(runoff.max = round(runoff.max, 3)) %>% 
+           runoff.max = runoff) %>%
+    select(basin.id, runoff.max, year) %>%
+    mutate(runoff.max = round(runoff.max, 3)) %>%
     write_csv("runoff_max_noCC_wfdei.csv")
-  
+
   # get wfdei mean values for baseline years (GCM deltas to be applied to these values)
   runoff_wfdei %>%
-    filter(year %in% baseline_years) %>% 
-    group_by(id) %>% 
-    summarise(runoff = mean(runoff)) %>% 
+    filter(year %in% baseline_years) %>%
+    group_by(id) %>%
+    summarise(runoff = mean(runoff)) %>%
     mutate(gcm = "wfdei") ->
     runoff_mean_wfdei_hist
 
@@ -662,195 +665,195 @@ adjust_gcm_mean <- function(base_dir, extras_dir, level2_out_dir, time_scale, st
     get_gcm("MIROC-ESM-CHEM", "6p0", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("MIROC-ESM-CHEM", "8p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
     get_gcm("NorESM1-M", "2p6", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("NorESM1-M", "4p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
     get_gcm("NorESM1-M", "6p0", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("NorESM1-M", "8p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names)
-  ) -> 
+  ) ->
     runoff_gcm_all
-  
+
   # global comparison
-  runoff_gcm_all %>% 
-    filter(rcp == "8p5") %>% select(-rcp) %>% 
+  runoff_gcm_all %>%
+    filter(rcp == "8p5") %>% select(-rcp) %>%
     bind_rows(
       runoff_wfdei %>% mutate(gcm = "wfdei") %>% select(-name)
-    ) %>% group_by(id, gcm) %>% summarise(runoff = mean(runoff)) %>% 
+    ) %>% group_by(id, gcm) %>% summarise(runoff = mean(runoff)) %>%
     ungroup() %>%
-    spread(gcm, runoff) %>% 
+    spread(gcm, runoff) %>%
     ggplot(aes(`IPSL-CM5A-LR`, wfdei)) +
     geom_point() + geom_abline() +
     scale_y_log10() + scale_x_log10()
   labs(y = "Global runoff (km3)",
        title = "GCM global runoff comparison (RCP4.5)")
-  
-  
+
+
   # Determine the mean annual runoff in historical years (baseline yers) in the GCM runs, so they can be compared to the
   # watch data
-  runoff_gcm_all %>% 
-    filter(year %in% baseline_years) %>% 
-    group_by(gcm, rcp, id) %>% 
+  runoff_gcm_all %>%
+    filter(year %in% baseline_years) %>%
+    group_by(gcm, rcp, id) %>%
     summarise(mean_runoff = mean(runoff)) %>% ungroup() ->
     runoff_gcm_baseline_means
 
   runoff_gcm_all %>%
     left_join(runoff_gcm_baseline_means,
               by = c("id", "gcm", "rcp")) %>%
-    left_join(runoff_mean_wfdei_hist %>% select(-gcm) %>% rename(hist_mean=runoff), by=c('id')) %>% 
+    left_join(runoff_mean_wfdei_hist %>% select(-gcm) %>% rename(hist_mean=runoff), by=c('id')) %>%
     #mutate(delta_factor = runoff / mean_runoff) %>%
     mutate(delta_factor = mean_runoff / hist_mean) %>%
     select(id, year, gcm, rcp, delta_factor) ->
     deltas_gcm_all
-  # filter(id == 36) %>% 
+  # filter(id == 36) %>%
   # ggplot(aes(year,delta_factor, colour = gcm)) +
   # geom_line() + facet_wrap(~rcp)
-  
-  
+
+
   # compare GCM hist means against WATCH means for same period, each plotted point represents a different basin.
   bind_rows(
     runoff_mean_wfdei_hist,
     runoff_gcm_baseline_means %>% filter(rcp == "2p6") %>% select(-rcp) %>% rename(runoff = mean_runoff)
-  ) %>% 
-    spread(gcm, runoff) %>% 
+  ) %>%
+    spread(gcm, runoff) %>%
     ggplot(aes(y = wfdei)) +
-    geom_point(aes(x = `IPSL-CM5A-LR`)) + geom_abline() + 
+    geom_point(aes(x = `IPSL-CM5A-LR`)) + geom_abline() +
     # ^^ switch gcm name in above line to view different model
     scale_x_continuous(trans='log10') +
     scale_y_continuous(trans='log10')
-  
-  
-  # Apply the delta factor to correct all xanthos runoff values produced with GCMs, so they reflect WATCH mean value in 
+
+
+  # Apply the delta factor to correct all xanthos runoff values produced with GCMs, so they reflect WATCH mean value in
   # historical years (1970-2010)
-  runoff_gcm_all %>% 
+  runoff_gcm_all %>%
     left_join(deltas_gcm_all,
-              by = c("id", "gcm", "rcp", "year")) %>% 
-    mutate(runoff_adj = delta_factor * runoff) %>% 
+              by = c("id", "gcm", "rcp", "year")) %>%
+    mutate(runoff_adj = delta_factor * runoff) %>%
     select(id, year, runoff_adj, gcm, rcp) ->
     runoff_gcm_all_adj
   # check adjustment--make sure that the delta correction worked by plotting one scenario.
-  runoff_gcm_all_adj %>% 
-    filter(rcp == "4p5") %>% select(-rcp) %>% 
+  runoff_gcm_all_adj %>%
+    filter(rcp == "4p5") %>% select(-rcp) %>%
     bind_rows(
       runoff_wfdei %>% mutate(gcm = "wfdei") %>% select(-name)
-    ) %>% group_by(year, gcm) %>% summarise(runoff = sum(runoff_adj)) %>% 
-    ungroup() %>% 
+    ) %>% group_by(year, gcm) %>% summarise(runoff = sum(runoff_adj)) %>%
+    ungroup() %>%
     ggplot(aes(year, runoff, colour = gcm)) +
     geom_line() + expand_limits(y = 0) +
     labs(y = "Global runoff (km3)",
          title = "GCM global runoff comparison (RCP4.5)")
-  
+
   # apply smoothing
   # get baseline period
   # Given all values from 1970-2010 are equal to the mean for all basins, you end up with only very
   # slightly smoothed values during this time, that flow nicely into the future periods.
-  runoff_gcm_all_adj %>% 
-    left_join(runoff_mean_wfdei_hist %>% rename(baseline_mean = runoff) %>% 
+  runoff_gcm_all_adj %>%
+    left_join(runoff_mean_wfdei_hist %>% rename(baseline_mean = runoff) %>%
                 select(-gcm),
-              by = c("id")) %>% 
-    filter(year >= min(baseline_years)) %>% 
+              by = c("id")) %>%
+    filter(year >= min(baseline_years)) %>%
     mutate(runoff_adj_basemean = if_else(year %in% baseline_years,
-                                         baseline_mean, runoff_adj)) %>% 
+                                         baseline_mean, runoff_adj)) %>%
     group_by(id, gcm, rcp) %>%
-    nest() %>% 
-    mutate(model = data %>% map(~loess(runoff_adj_basemean ~ year, data = .))) %>% 
-    mutate(Pred = map2(model, data, predict)) %>% 
-    unnest(Pred, data) %>% 
-    select(id, gcm, rcp, year, Pred) %>% 
-    rename(runoff_km3perYr = Pred) %>% 
-    mutate(runoff_km3perYr = if_else(runoff_km3perYr < 0, 0, runoff_km3perYr)) -> 
+    nest() %>%
+    mutate(model = data %>% map(~loess(runoff_adj_basemean ~ year, data = .))) %>%
+    mutate(Pred = map2(model, data, predict)) %>%
+    unnest(Pred, data) %>%
+    select(id, gcm, rcp, year, Pred) %>%
+    rename(runoff_km3perYr = Pred) %>%
+    mutate(runoff_km3perYr = if_else(runoff_km3perYr < 0, 0, runoff_km3perYr)) ->
     runoff_gcm_all_adj_smooth
-  
-  
-  # runoff_gcm_all_adj_smooth %>% 
+
+
+  # runoff_gcm_all_adj_smooth %>%
   #   write_csv("runoff_isimip_gcam_basins.csv")
-  
-  
-  runoff_gcm_all_adj_smooth %>% 
-    group_by(year, gcm, rcp) %>% summarise(runoff = sum(runoff_km3perYr)) %>% 
-    ungroup() %>% 
-    ggplot(aes(year, runoff, colour = gcm)) + geom_line() + 
+
+
+  runoff_gcm_all_adj_smooth %>%
+    group_by(year, gcm, rcp) %>% summarise(runoff = sum(runoff_km3perYr)) %>%
+    ungroup() %>%
+    ggplot(aes(year, runoff, colour = gcm)) + geom_line() +
     facet_wrap(~rcp) + expand_limits(y = 0)
-  
-  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed. 
-  runoff_gcm_all_adj_smooth %>% 
+
+  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed.
+  runoff_gcm_all_adj_smooth %>%
     left_join(runoff_mean_wfdei_hist %>% select(-gcm),
               by = "id") %>% rename(runoff_hist = runoff) %>%
     mutate(runoff_km3perYr = if_else(year <= 2010,
-                                     runoff_hist, runoff_km3perYr)) %>% 
+                                     runoff_hist, runoff_km3perYr)) %>%
     select(-runoff_hist) -> runoff_gcm_all_GCAM_2
 
-  runoff_gcm_all_adj_smooth %>% 
+  runoff_gcm_all_adj_smooth %>%
     left_join(runoff_mean_wfdei_hist %>% select(-gcm),
               by = "id") %>% rename(runoff_hist = runoff) %>%
     mutate(runoff_km3perYr = if_else(year <= 2009,
-                                     runoff_hist, runoff_km3perYr)) %>% 
+                                     runoff_hist, runoff_km3perYr)) %>%
     select(-runoff_hist) -> runoff_gcm_all_GCAM_3
-  
-    
-  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed. 
-  runoff_gcm_all_adj_smooth %>% 
+
+
+  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed.
+  runoff_gcm_all_adj_smooth %>%
     left_join(runoff_mean_wfdei_hist %>% select(-gcm),
               by = "id") %>% rename(runoff_hist = runoff) %>%
     mutate(runoff_km3perYr = if_else(year <= 2010,
-                                     runoff_hist, runoff_km3perYr)) %>% 
-    select(-runoff_hist) %>% 
-    filter(year %in% c(1975, 1990, seq(2005, 2095, 5), 2099)) %>% 
+                                     runoff_hist, runoff_km3perYr)) %>%
+    select(-runoff_hist) %>%
+    filter(year %in% c(1975, 1990, seq(2005, 2095, 5), 2099)) %>%
     mutate(year = if_else(year == 2099, 2100, as.double(year))) ->
     runoff_gcm_all_GCAM
-  
-  
-  runoff_gcm_all_GCAM %>% 
-    filter(id == 15) %>% 
-    group_by(year, gcm, rcp) %>% summarise(runoff = sum(runoff_km3perYr)) %>% 
-    ungroup() %>% 
-    ggplot(aes(year, runoff, colour = gcm)) + geom_line() + 
+
+
+  runoff_gcm_all_GCAM %>%
+    filter(id == 15) %>%
+    group_by(year, gcm, rcp) %>% summarise(runoff = sum(runoff_km3perYr)) %>%
+    ungroup() %>%
+    ggplot(aes(year, runoff, colour = gcm)) + geom_line() +
     facet_wrap(~rcp) + expand_limits(y = 0)
-  
+
   GCAM_yrs <- runoff_gcm_all_GCAM %>% .$year %>% unique()
-  
+
   # prepare L2 gcam files for ISI-MIP scenarios
   # Insert these into GCAM and rebuild the data system
   gcm <- "GFDL-ESM2M"
   rcp <- "2p6"
 
-  
+
 
   # Create Level 2 csv files
-  gcam_years <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075, 
+  gcam_years <- c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075,
                   2080, 2085, 2090, 2095, 2100)
   gcm_names <- c('NorESM1-M', 'MIROC-ESM-CHEM', 'IPSL-CM5A-LR', 'HadGEM2-ES', 'GFDL-ESM2M')
   rcp_names <- c('rcp2p6', 'rcp4p5', 'rcp6p0', 'rcp8p5')
   variable <- 'runoff'
-  #write_csv_file(runoff_gcm_all_GCAM, gcam_years, gcm_names, rcp_names, csv_basepath, variable, 
+  #write_csv_file(runoff_gcm_all_GCAM, gcam_years, gcm_names, rcp_names, csv_basepath, variable,
   #              basin_ids=basin_ids, region_basin=region_basin, renewrsc_max_gcam=renewrsc_max_gcam, level2_out_dir=level2_out_dir,
   #              L201.GrdRenewRsrcMax_runoff=L201.GrdRenewRsrcMax_runoff)
 
   # Modify deltas_gcm_all to include basins so it can be  used in separate plotting module that organizes by basin.
-  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(deltas_gcm_all, by='id') %>% 
+  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(deltas_gcm_all, by='id') %>%
     select(-id) ->deltas_gcm_all
   if(!is.null(basins_filter)){
-    deltas_gcm_all <- deltas_gcm_all %>% filter(name %in% basins_filter)    
+    deltas_gcm_all <- deltas_gcm_all %>% filter(name %in% basins_filter)
   }
-  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_adj_smooth, by='id') %>% 
+  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_adj_smooth, by='id') %>%
     select(-id) %>% rename(value=runoff_km3perYr) -> runoff_gcm_all_adj_smooth
   if(!is.null(basins_filter)){
-    runoff_gcm_all_adj_smooth <- runoff_gcm_all_adj_smooth %>% filter(name %in% basins_filter)    
+    runoff_gcm_all_adj_smooth <- runoff_gcm_all_adj_smooth %>% filter(name %in% basins_filter)
   }
-  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_2, by='id') %>% 
+  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_2, by='id') %>%
     select(-id) %>% rename(value=runoff_km3perYr) ->runoff_gcm_all_GCAM_2
   if(!is.null(basins_filter)){
-    runoff_gcm_all_GCAM_2 <- runoff_gcm_all_GCAM_2 %>% filter(name %in% basins_filter)    
+    runoff_gcm_all_GCAM_2 <- runoff_gcm_all_GCAM_2 %>% filter(name %in% basins_filter)
   }
-  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_3, by='id') %>% 
+  read_csv(gcam_basins) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_3, by='id') %>%
     select(-id) %>% rename(value=runoff_km3perYr) ->runoff_gcm_all_GCAM_3
   if(!is.null(basins_filter)){
-    runoff_gcm_all_GCAM_3 <- runoff_gcm_all_GCAM_3 %>% filter(name %in% basins_filter)    
+    runoff_gcm_all_GCAM_3 <- runoff_gcm_all_GCAM_3 %>% filter(name %in% basins_filter)
   }
-  
-  return(list('deltas_gcm_all' = deltas_gcm_all, 'runoff_gcm_all_adj_smooth' = runoff_gcm_all_adj_smooth, 
+
+  return(list('deltas_gcm_all' = deltas_gcm_all, 'runoff_gcm_all_adj_smooth' = runoff_gcm_all_adj_smooth,
               'runoff_gcm_all_GCAM_2'=runoff_gcm_all_GCAM_2, 'runoff_gcm_all_GCAM_3'=runoff_gcm_all_GCAM_3))
 }
 
-adjust_gcm_mean_country <- function(base_dir, extras_dir, level2_out_dir, country_filter, time_scale, stored_in_dir, 
+adjust_gcm_mean_country <- function(base_dir, extras_dir, level2_out_dir, country_filter, time_scale, stored_in_dir,
                                      run_name, xanthos_var_names){
 
   # same as adjust_gcm_mean, except with some modifications to make it work for aggregate country runoff.
-  
+
   # Required input files
   gcam_countries <- paste0(extras_dir, '/', "gcam_country_id.csv")
 
@@ -859,40 +862,40 @@ adjust_gcm_mean_country <- function(base_dir, extras_dir, level2_out_dir, countr
   read_csv(gcam_countries) %>%
     select(country.id, country.name) %>% rename(GCAM_country_name=country.name, GCAM_basin_ID=country.id) ->
     basin_ids
-  
+
   # read watch reanalysis data
-  read_csv(reanalysis_data) %>% 
-    gather(year, runoff, -name, -id) %>% 
+  read_csv(reanalysis_data) %>%
+    gather(year, runoff, -name, -id) %>%
     mutate(year = as.integer(year)) -> runoff_wfdei
-  
+
   baseline_years <- 1970:2009
-  
+
   # prepare watch output for GCAM (km3 per year)
-  runoff_wfdei %>% group_by(id) %>% 
-    filter(year %in% baseline_years) %>% 
-    summarise(runoff = mean(runoff)) %>% 
-    mutate(year = 1970) %>% 
-    complete(year = seq(1970, 2100, 5), id) %>% 
-    group_by(id) %>% 
-    tidyr::fill(runoff) %>% ungroup() %>% 
-    arrange(id, year) %>% 
+  runoff_wfdei %>% group_by(id) %>%
+    filter(year %in% baseline_years) %>%
+    summarise(runoff = mean(runoff)) %>%
+    mutate(year = 1970) %>%
+    complete(year = seq(1970, 2100, 5), id) %>%
+    group_by(id) %>%
+    tidyr::fill(runoff) %>% ungroup() %>%
+    arrange(id, year) %>%
     rename(basin.id = id,
-           runoff.max = runoff) %>% 
-    select(basin.id, runoff.max, year) %>% 
-    mutate(runoff.max = round(runoff.max, 3)) %>% 
+           runoff.max = runoff) %>%
+    select(basin.id, runoff.max, year) %>%
+    mutate(runoff.max = round(runoff.max, 3)) %>%
     write_csv("country_runoff_max_noCC_wfdei.csv")
-  
+
   # get wfdei mean values for baseline years (GCM deltas to be applied to these values)
   runoff_wfdei %>%
-    filter(year %in% baseline_years) %>% 
-    group_by(id) %>% 
-    summarise(runoff = mean(runoff)) %>% 
+    filter(year %in% baseline_years) %>%
+    group_by(id) %>%
+    summarise(runoff = mean(runoff)) %>%
     mutate(gcm = "wfdei") ->
     runoff_mean_wfdei_hist
-  
+
   # gcm = "GFDL-ESM2M"; rcp = "2p6"
   # read in historical GCM values
-    
+
   bind_rows(
     get_gcm("GFDL-ESM2M", "2p6", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("GFDL-ESM2M", "4p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
     get_gcm("GFDL-ESM2M", "6p0", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("GFDL-ESM2M", "8p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
@@ -904,104 +907,104 @@ adjust_gcm_mean_country <- function(base_dir, extras_dir, level2_out_dir, countr
     get_gcm("MIROC-ESM-CHEM", "6p0", base_dir, stored_in_dir, run_name, time_scale), xanthos_var_names, get_gcm("MIROC-ESM-CHEM", "8p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
     get_gcm("NorESM1-M", "2p6", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("NorESM1-M", "4p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names),
     get_gcm("NorESM1-M", "6p0", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names), get_gcm("NorESM1-M", "8p5", base_dir, stored_in_dir, run_name, time_scale, xanthos_var_names)
-  ) -> 
+  ) ->
     runoff_gcm_all
-  
+
   # Determine the mean annual runoff in historical years (baseline yers) in the GCM runs, so they can be compared to the
   # watch data
-  runoff_gcm_all %>% 
-    filter(year %in% baseline_years) %>% 
-    group_by(gcm, rcp, id) %>% 
+  runoff_gcm_all %>%
+    filter(year %in% baseline_years) %>%
+    group_by(gcm, rcp, id) %>%
     summarise(mean_runoff = mean(runoff)) %>% ungroup() ->
     runoff_gcm_baseline_means
-  
-  runoff_gcm_all %>% 
+
+  runoff_gcm_all %>%
     left_join(runoff_gcm_baseline_means,
               by = c("id", "gcm", "rcp")) %>%
-    mutate(delta_factor = runoff / mean_runoff) %>% 
+    mutate(delta_factor = runoff / mean_runoff) %>%
     select(id, year, gcm, rcp, delta_factor) ->
     deltas_gcm_all
-  
-  
-  # Apply the delta factor to correct all xanthos runoff values produced with GCMs, so they reflect WATCH mean value in 
+
+
+  # Apply the delta factor to correct all xanthos runoff values produced with GCMs, so they reflect WATCH mean value in
   # historical years (1970-2010)
-  deltas_gcm_all %>% 
+  deltas_gcm_all %>%
     left_join(runoff_mean_wfdei_hist %>% select(-gcm),
-              by = c("id")) %>% 
-    mutate(runoff_adj = delta_factor * runoff) %>% 
+              by = c("id")) %>%
+    mutate(runoff_adj = delta_factor * runoff) %>%
     select(id, year, runoff_adj, gcm, rcp) ->
     runoff_gcm_all_adj
 
-  
+
   # apply smoothing
   # get baseline period
   # Given all values from 1970-2010 are equal to the mean for all basins, you end up with only very
   # slightly smoothed values during this time, that flow nicely into the future periods.
-  runoff_gcm_all_adj %>% 
-    left_join(runoff_mean_wfdei_hist %>% rename(baseline_mean = runoff) %>% 
+  runoff_gcm_all_adj %>%
+    left_join(runoff_mean_wfdei_hist %>% rename(baseline_mean = runoff) %>%
                 select(-gcm),
-              by = c("id")) %>% 
-    filter(year >= min(baseline_years)) %>% 
+              by = c("id")) %>%
+    filter(year >= min(baseline_years)) %>%
     mutate(runoff_adj_basemean = if_else(year %in% baseline_years,
-                                         baseline_mean, runoff_adj)) %>% 
+                                         baseline_mean, runoff_adj)) %>%
     group_by(id, gcm, rcp) %>%
-    nest() %>% 
-    mutate(model = data %>% map(~loess(runoff_adj_basemean ~ year, data = .))) %>% 
-    mutate(Pred = map2(model, data, predict)) %>% 
-    unnest(Pred, data) %>% 
-    select(id, gcm, rcp, year, Pred) %>% 
-    rename(runoff_km3perYr = Pred) %>% 
-    mutate(runoff_km3perYr = if_else(runoff_km3perYr < 0, 0, runoff_km3perYr)) -> 
+    nest() %>%
+    mutate(model = data %>% map(~loess(runoff_adj_basemean ~ year, data = .))) %>%
+    mutate(Pred = map2(model, data, predict)) %>%
+    unnest(Pred, data) %>%
+    select(id, gcm, rcp, year, Pred) %>%
+    rename(runoff_km3perYr = Pred) %>%
+    mutate(runoff_km3perYr = if_else(runoff_km3perYr < 0, 0, runoff_km3perYr)) ->
     runoff_gcm_all_adj_smooth
-  
-  
-  runoff_gcm_all_adj_smooth %>% 
-    group_by(year, gcm, rcp) %>% summarise(runoff = sum(runoff_km3perYr)) %>% 
-    ungroup() %>% 
-    ggplot(aes(year, runoff, colour = gcm)) + geom_line() + 
+
+
+  runoff_gcm_all_adj_smooth %>%
+    group_by(year, gcm, rcp) %>% summarise(runoff = sum(runoff_km3perYr)) %>%
+    ungroup() %>%
+    ggplot(aes(year, runoff, colour = gcm)) + geom_line() +
     facet_wrap(~rcp) + expand_limits(y = 0)
-  
-  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed. 
-  runoff_gcm_all_adj_smooth %>% 
+
+  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed.
+  runoff_gcm_all_adj_smooth %>%
     left_join(runoff_mean_wfdei_hist %>% select(-gcm),
               by = "id") %>% rename(runoff_hist = runoff) %>%
     mutate(runoff_km3perYr = if_else(year <= 2010,
-                                     runoff_hist, runoff_km3perYr)) %>% 
+                                     runoff_hist, runoff_km3perYr)) %>%
     select(-runoff_hist) -> runoff_gcm_all_GCAM_2
-  
-  runoff_gcm_all_adj_smooth %>% 
+
+  runoff_gcm_all_adj_smooth %>%
     left_join(runoff_mean_wfdei_hist %>% select(-gcm),
               by = "id") %>% rename(runoff_hist = runoff) %>%
     mutate(runoff_km3perYr = if_else(year <= 2009,
-                                     runoff_hist, runoff_km3perYr)) %>% 
+                                     runoff_hist, runoff_km3perYr)) %>%
     select(-runoff_hist) -> runoff_gcm_all_GCAM_3
-  
-  
-  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed. 
-  runoff_gcm_all_adj_smooth %>% 
+
+
+  # fix 1975 - 2010 to mean hist, so they dont apppear smoothed.
+  runoff_gcm_all_adj_smooth %>%
     left_join(runoff_mean_wfdei_hist %>% select(-gcm),
               by = "id") %>% rename(runoff_hist = runoff) %>%
     mutate(runoff_km3perYr = if_else(year <= 2010,
-                                     runoff_hist, runoff_km3perYr)) %>% 
-    select(-runoff_hist) %>% 
-    filter(year %in% c(1975, 1990, seq(2005, 2095, 5), 2099)) %>% 
+                                     runoff_hist, runoff_km3perYr)) %>%
+    select(-runoff_hist) %>%
+    filter(year %in% c(1975, 1990, seq(2005, 2095, 5), 2099)) %>%
     mutate(year = if_else(year == 2099, 2100, as.double(year))) ->
     runoff_gcm_all_GCAM
 
   # Modify deltas_gcm_all to include basins so it can be  used in separate plotting module that organizes by basin.
-  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(deltas_gcm_all, by='id') %>% 
+  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(deltas_gcm_all, by='id') %>%
     select(-id) %>% filter(name %in% basins_filter) -> deltas_gcm_all
-  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_adj_smooth, by='id') %>% 
+  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_adj_smooth, by='id') %>%
     select(-id) %>% filter(name %in% basins_filter) %>% rename(value=runoff_km3perYr) ->runoff_gcm_all_adj_smooth
-  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_2, by='id') %>% 
+  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_2, by='id') %>%
     select(-id) %>% filter(name %in% basins_filter) %>% rename(value=runoff_km3perYr) ->runoff_gcm_all_GCAM_2
-  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_3, by='id') %>% 
+  read_csv(gcam_countries) %>% rename(id=basin.id) %>% rename(name=basin.name) %>% left_join(runoff_gcm_all_GCAM_3, by='id') %>%
     select(-id) %>% filter(name %in% basins_filter) %>% rename(value=runoff_km3perYr) ->runoff_gcm_all_GCAM_3
-  return(list('deltas_gcm_all' = deltas_gcm_all, 'runoff_gcm_all_adj_smooth' = runoff_gcm_all_adj_smooth, 
+  return(list('deltas_gcm_all' = deltas_gcm_all, 'runoff_gcm_all_adj_smooth' = runoff_gcm_all_adj_smooth,
               'runoff_gcm_all_GCAM_2'=runoff_gcm_all_GCAM_2, 'runoff_gcm_all_GCAM_3'=runoff_gcm_all_GCAM_3))
 }
 
-write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable, 
+write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable,
                            basin_ids=NULL, region_basin=FALSE, renewrsc_max_gcam=FALSE, level2_out_dir=FALSE,
                            L201.GrdRenewRsrcMax_runoff=FALSE, gcam_xanthos_basin_mapping=NULL, name_exclude_list=NULL){
   if(!is.null(gcam_xanthos_basin_mapping)){
@@ -1011,11 +1014,11 @@ write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable
   GCAM_basin_country <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/GCAMBasin_country.csv'
   gcam_region_names <- 'C:/Users/twild/all_git_repositories/idb_results/downscaling/Water/Xanthos/output/GCAM_region_names.csv'
   # Process data
-  for(clim_mod in gcms){ 
+  for(clim_mod in gcms){
     for (forc in rcps){
       if(variable=='hydro'){
-        export_df <- input %>% select(name, year, var, gcm, rcp, clim_imp_val) %>% 
-          rename(region=name, fixedOutput=clim_imp_val) %>% # period=year, 
+        export_df <- input %>% select(name, year, var, gcm, rcp, clim_imp_val) %>%
+          rename(region=name, fixedOutput=clim_imp_val) %>% # period=year,
           filter(year %in% gcam_years, gcm == clim_mod, rcp==forc) %>% select(-var, -gcm, -rcp)  # period
         export_df$supplysector <- 'electricity'
         export_df$subsector <- 'hydro'
@@ -1028,23 +1031,23 @@ write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable
         export_df$tech.share.weight <- 0
         # save file
         fileName <- paste0("hydro_impacts", "_", clim_mod, "_", forc, ".csv")
-        write.table('INPUT_TABLE,,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, 
+        write.table('INPUT_TABLE,,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE,
                     sep = ',', quote=FALSE)
-        write.table('Variable ID,,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, 
+        write.table('Variable ID,,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE,
                     append=TRUE, quote=FALSE)
-        write.table('StubTechFixOut,,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, 
+        write.table('StubTechFixOut,,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE,
                     append = TRUE, quote=FALSE)
-        write.table(',,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, append = TRUE, 
+        write.table(',,,,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, append = TRUE,
                     quote=FALSE)
-        write.table(export_df, paste0(csv_basepath, '/', fileName), append=TRUE, col.names=TRUE, row.names = FALSE, 
+        write.table(export_df, paste0(csv_basepath, '/', fileName), append=TRUE, col.names=TRUE, row.names = FALSE,
                     sep=',', quote=FALSE)
       }else if(variable=='runoff'){
-        export_df <- input %>% filter(gcm == clim_mod, rcp == forc, year %in% gcam_years) %>% 
-          rename(year.fillout=year) %>% 
+        export_df <- input %>% filter(gcm == clim_mod, rcp == forc, year %in% gcam_years) %>%
+          rename(year.fillout=year) %>%
           mutate(sub.renewable.resource='runoff')
         if(!is.null(gcam_xanthos_basin_mapping)){
-          export_df <- export_df %>% 
-            left_join(mapping_file, by=c('name')) %>% 
+          export_df <- export_df %>%
+            left_join(mapping_file, by=c('name')) %>%
             select(-name) %>%
             rename(name = GCAM.basin.name)
         }
@@ -1054,30 +1057,30 @@ write_csv_file <- function(input, gcam_years, gcms, rcps, csv_basepath, variable
         f4 <- read.csv(gcam_region_names, skip=6)
         f5 <- f3 %>% left_join(f4, by=c('GCAM_region_ID')) %>% select(-country, GCAM_region_ID)
         export_df <- export_df %>%
-          left_join(f5, by=c('name')) %>% 
+          left_join(f5, by=c('name')) %>%
           mutate(renewresource = paste0(name, "_water withdrawals")) %>%
 #          left_join(region_basin, by=c('renewresource')) %>%
           rename(maxSubResource=clim_imp_val) %>%
-#          mutate(renewresource=str_replace_all(renewresource, '-water withdrawals', '_water withdrawals')) %>% 
+#          mutate(renewresource=str_replace_all(renewresource, '-water withdrawals', '_water withdrawals')) %>%
           filter(region!="NA") %>%
-          filter(!name %in% name_exclude_list) %>% 
+          filter(!name %in% name_exclude_list) %>%
           select(region, renewresource, sub.renewable.resource, year.fillout, maxSubResource)
-        
+
         renewrsc_max_gcam <- paste0(extras_dir, '/', "L201.RenewRsrcCurves_calib_watergap.csv")
-        
+
         # save file
         fileName <- paste0("runoff_impacts", "_", clim_mod, "_", forc, ".csv")
-        write.table('INPUT_TABLE,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, 
+        write.table('INPUT_TABLE,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE,
                     sep = ',', quote=FALSE)
-        write.table('Variable ID,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, 
+        write.table('Variable ID,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE,
                     append=TRUE, quote=FALSE)
-        write.table('GrdRenewRsrcMax,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, 
+        write.table('GrdRenewRsrcMax,,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE,
                     append = TRUE, quote=FALSE)
-        write.table(',,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, append = TRUE, 
+        write.table(',,,,,', file=paste0(csv_basepath, '/', fileName), row.names = FALSE, col.names=FALSE, append = TRUE,
                     quote=FALSE)
-        write.table(export_df, paste0(csv_basepath, '/', fileName), append=TRUE, col.names=TRUE, row.names = FALSE, 
+        write.table(export_df, paste0(csv_basepath, '/', fileName), append=TRUE, col.names=TRUE, row.names = FALSE,
                     sep=',', quote=FALSE)
-        
+
 
       }else if(variable=='agProd'){
         print("no code yet")
@@ -1091,7 +1094,7 @@ csv2xml <- function(csvpath, xmlpath, gcam_variable){
   options("gcamdata.use_java"=TRUE)
   filelist <- list.files(path=csvpath, full.names=TRUE, recursive=FALSE)
   filelist <- filelist[(!grepl(".xml", filelist))]
-  invisible(foreach(f = filelist) %do% { 
+  invisible(foreach(f = filelist) %do% {
     filename1 <- substr(f, (nchar(csvpath)+2), (nchar(f)-4))
     tibble::as.tibble(read.csv(f, skip = 4, stringsAsFactors = F)) -> x
     gcamdata::create_xml(paste0(xmlpath, "/", filename1, ".xml"), mi_header='C:/Users/twild/Downloads/gcam-v5.1.3-Windows-Release-Package/input/gcamdata/inst/extdata/mi_headers/ModelInterface_headers.txt') %>%
@@ -1110,9 +1113,9 @@ get_gcm <- function(gcm, rcp, base_dir, stored_in_dir, run_name, time_scale, xan
   }
   xanthos_file <- paste0(xanthos_var_names, "_", gcm, "_", 'rcp', rcp, '_', time_scale, '.csv')
   xanthos_output_filepath <- paste0(xanthos_dir, '/', xanthos_file)
-  read_csv(xanthos_output_filepath) %>% 
-    gather(year, runoff, -name, -id) %>% 
-    select(-name) %>% 
-    mutate(gcm = gcm, rcp = rcp, year = as.integer(year)) %>% 
+  read_csv(xanthos_output_filepath) %>%
+    gather(year, runoff, -name, -id) %>%
+    select(-name) %>%
+    mutate(gcm = gcm, rcp = rcp, year = as.integer(year)) %>%
     mutate(rcp = paste0('rcp', rcp))
 }
